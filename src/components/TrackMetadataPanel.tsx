@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ExternalLink, Music2, RefreshCw, X } from 'lucide-react'
-import type { Track, PlatformLink, EnrichedResult } from '@/types/index'
-
-const PLATFORM_LABELS: Record<string, { label: string; color: string }> = {
-  spotify:       { label: 'Spotify',       color: 'text-green-400' },
-  apple_music:   { label: 'Apple Music',   color: 'text-pink-400' },
-  youtube_music: { label: 'YouTube Music', color: 'text-red-400' },
-  youtube:       { label: 'YouTube',       color: 'text-red-500' },
-  melon:         { label: '멜론',           color: 'text-green-300' },
-  bugs:          { label: '벅스',           color: 'text-purple-400' },
-  genie:         { label: '지니',           color: 'text-blue-400' },
-}
+import { Music2, RefreshCw, X, Loader2 } from 'lucide-react'
+import type { Track, EnrichedResult } from '@/types/index'
 
 interface Props {
   track: Track
@@ -18,46 +8,50 @@ interface Props {
 }
 
 export function TrackMetadataPanel({ track, onClose }: Props) {
-  const [links, setLinks] = useState<PlatformLink[]>([])
   const [enriched, setEnriched] = useState<EnrichedResult | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [aiStep, setAiStep] = useState<string | null>(null)
 
+  // Reset when track changes
   useEffect(() => {
-    setLinks(track.platformLinks ?? [])
     setEnriched(null)
-    window.musicApp.library.getPlatformLinks(track.id).then(setLinks)
+    setAiStep(null)
   }, [track.id])
 
+  // Listen for AI enrichment events for this track
   useEffect(() => {
-    const unsub = window.musicApp.system.onImportEnriched((data) => {
-      if (data.trackId !== track.id) return
-      const result = data.result as EnrichedResult
-      setEnriched(result)
-      setLinks(result.platformLinks)
+    const unsubStatus = window.musicApp.system.onImportStatus((s) => {
+      if (s.trackId === track.id && (s.step === 'ai-searching' || s.step === 'ai-classifying')) {
+        setAiStep(s.step)
+      } else if (s.trackId === track.id && s.step === 'done') {
+        setAiStep(null)
+      }
     })
-    return unsub
-  }, [track.id])
 
-  const handleReanalyze = async () => {
-    setLoading(true)
-    try {
-      await window.musicApp.library.importUrl(track.sourceUrl ?? '')
-    } finally {
-      setLoading(false)
-    }
-  }
+    const unsubEnriched = window.musicApp.system.onImportEnriched((data) => {
+      if (data.trackId !== track.id) return
+      setEnriched(data.result)
+      setAiStep(null)
+    })
+
+    return () => { unsubStatus(); unsubEnriched() }
+  }, [track.id])
 
   const coverUrl = track.coverArtPath
     ? `music://localhost/${encodeURIComponent(track.coverArtPath)}`
     : null
 
-  const hasAiData = enriched || links.length > 0
+  // Use latest data: enriched result overrides track data
+  const genre = enriched?.genre ?? track.genre
+  const mood = enriched?.mood ?? track.mood
+  const artistName = enriched?.performingArtist ?? track.artistName
+  const summary = enriched?.summary ?? null
+  const hasAiData = !!(genre || mood)
 
   return (
-    <div className="w-72 flex-shrink-0 border-l border-neutral-800 bg-neutral-900 flex flex-col overflow-y-auto">
+    <div className="w-64 flex-shrink-0 border-l border-neutral-800 bg-neutral-900 flex flex-col overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-        <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Now Playing</span>
+        <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Track Info</span>
         <button onClick={onClose} className="text-neutral-500 hover:text-neutral-300 transition-colors">
           <X size={14} />
         </button>
@@ -76,87 +70,73 @@ export function TrackMetadataPanel({ track, onClose }: Props) {
 
       {/* Track Info */}
       <div className="px-4 pb-4">
-        <h3 className="text-sm font-semibold text-neutral-100 truncate">{track.title ?? 'Unknown Title'}</h3>
-        <p className="text-xs text-neutral-500 mt-0.5 truncate">{track.artistName ?? 'Unknown Artist'}</p>
-        {track.albumTitle && (
-          <p className="text-xs text-neutral-600 mt-0.5 truncate">{track.albumTitle}</p>
-        )}
+        <h3 className="text-sm font-semibold text-neutral-100 leading-tight">{track.title ?? 'Unknown Title'}</h3>
+        <p className="text-xs text-neutral-500 mt-0.5 truncate">{artistName ?? 'Unknown Artist'}</p>
       </div>
 
       {/* AI Section */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-6">
         <div className="flex items-center gap-1.5 mb-3">
           <Music2 size={12} className="text-neutral-500" />
-          <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">AI Metadata</span>
+          <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">AI 분류</span>
         </div>
 
-        {/* Artist info */}
-        <div className="space-y-2 mb-3">
-          <div>
-            <p className="text-[10px] text-neutral-600 uppercase">부른 가수</p>
-            <p className="text-xs text-neutral-200">
-              {enriched?.performingArtist ?? track.artistName ?? '—'}
-            </p>
+        {/* AI working indicator */}
+        {aiStep && (
+          <div className="flex items-center gap-2 mb-3 text-xs text-violet-400">
+            <Loader2 size={11} className="animate-spin" />
+            {aiStep === 'ai-searching' ? '🔍 곡 정보 검색 중…' : '🎵 장르·무드 분류 중…'}
           </div>
-          {(enriched?.isCover || enriched?.originalArtist) && (
-            <div>
-              <p className="text-[10px] text-neutral-600 uppercase">원곡 아티스트</p>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">COVER</span>
-                <p className="text-xs text-neutral-200">{enriched?.originalArtist}</p>
+        )}
+
+        {/* Genre & Mood pills */}
+        {hasAiData && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {genre && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] text-neutral-600 uppercase">Genre</span>
+                <span className="text-[11px] px-2.5 py-1 bg-violet-500/20 text-violet-300 rounded-full font-medium">
+                  {genre}
+                </span>
               </div>
-            </div>
-          )}
-        </div>
-
-        {enriched?.summary && (
-          <p className="text-[11px] text-neutral-500 leading-relaxed mb-3">{enriched.summary}</p>
-        )}
-
-        {/* Platform links */}
-        {links.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[10px] text-neutral-600 uppercase mb-2">다른 플랫폼</p>
-            <div className="space-y-1">
-              {links.map(({ platform, url }) => {
-                const meta = PLATFORM_LABELS[platform] ?? { label: platform, color: 'text-neutral-400' }
-                return (
-                  <a
-                    key={platform}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => { e.preventDefault(); window.open(url, '_blank') }}
-                    className={`flex items-center justify-between w-full text-xs px-2.5 py-1.5 rounded-md bg-neutral-800/50 hover:bg-neutral-800 transition-colors ${meta.color}`}
-                  >
-                    {meta.label}
-                    <ExternalLink size={10} className="text-neutral-600" />
-                  </a>
-                )
-              })}
-            </div>
+            )}
+            {mood && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] text-neutral-600 uppercase">Mood</span>
+                <span className="text-[11px] px-2.5 py-1 bg-blue-500/20 text-blue-300 rounded-full font-medium">
+                  {mood}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Empty / loading */}
-        {!hasAiData && (
-          <div className="flex items-center gap-2 text-xs text-neutral-600">
-            {loading ? (
-              <>
-                <RefreshCw size={11} className="animate-spin" />
-                AI 분석 중…
-              </>
-            ) : track.sourceUrl ? (
-              <button
-                onClick={handleReanalyze}
-                className="flex items-center gap-1.5 text-neutral-600 hover:text-neutral-400 transition-colors"
-              >
-                <RefreshCw size={11} />
-                AI 분석 시작
-              </button>
-            ) : (
-              <span>AI 분석 정보 없음</span>
-            )}
+        {/* Cover info */}
+        {(enriched?.isCover && enriched?.originalArtist) && (
+          <div className="mb-3 px-2.5 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <p className="text-[9px] text-amber-500 uppercase font-medium mb-0.5">Cover Song</p>
+            <p className="text-xs text-amber-300">Original: {enriched.originalArtist}</p>
+          </div>
+        )}
+
+        {/* Summary */}
+        {summary && (
+          <p className="text-[11px] text-neutral-500 leading-relaxed mb-3">{summary}</p>
+        )}
+
+        {/* Source info */}
+        {track.sourcePlatform && (
+          <div className="mt-3 pt-3 border-t border-neutral-800">
+            <p className="text-[10px] text-neutral-600 uppercase mb-1">Source</p>
+            <p className="text-xs text-neutral-500 capitalize">{track.sourcePlatform}</p>
+          </div>
+        )}
+
+        {/* No AI data yet */}
+        {!hasAiData && !aiStep && (
+          <div className="flex items-center gap-2 text-xs text-neutral-700">
+            <RefreshCw size={11} />
+            AI 분석 대기 중…
           </div>
         )}
       </div>

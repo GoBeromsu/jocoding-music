@@ -1,18 +1,28 @@
 import { useState, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Link2, X, Loader2, CheckCircle2 } from 'lucide-react'
+import { Link2, X, Loader2, CheckCircle2, ListMusic } from 'lucide-react'
 import { useLibraryStore } from '@/store/libraryStore'
+import type { EnrichedResult } from '@/types/index'
 
-type Step = 'idle' | 'downloading' | 'analyzing' | 'done' | 'error'
+type Step = 'idle' | 'downloading' | 'metadata' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'
 
-const PLATFORM_ICONS: Record<string, string> = {
-  youtube: '▶',
-  spotify: '🎵',
-  apple_music: '🍎',
-  youtube_music: '▶',
-  melon: '🍈',
-  bugs: '🎧',
-  genie: '🧞',
+const STEP_LABELS: Record<Step, string> = {
+  idle: '',
+  downloading: '다운로드 중…',
+  metadata: '파일 정보 파싱 중…',
+  'ai-searching': '🔍 AI가 곡 정보 검색 중…',
+  'ai-classifying': '🎵 장르 · 무드 분류 중…',
+  done: '완료',
+  error: '오류',
+}
+
+function isPlaylistUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.searchParams.has('list') || u.pathname.includes('/playlist')
+  } catch {
+    return false
+  }
 }
 
 export function ImportUrlDialog() {
@@ -21,19 +31,29 @@ export function ImportUrlDialog() {
   const [step, setStep] = useState<Step>('idle')
   const [percent, setPercent] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [enrichedResult, setEnrichedResult] = useState<EnrichedResult | null>(null)
+  const [isPlaylist, setIsPlaylist] = useState(false)
   const unsubRef = useRef<(() => void)[]>([])
   const { loadTracks } = useLibraryStore()
+
+  const isActive = step !== 'idle' && step !== 'done' && step !== 'error'
 
   const cleanup = () => {
     unsubRef.current.forEach(fn => fn())
     unsubRef.current = []
   }
 
-  const handleImport = async () => {
+  const handleUrlChange = (val: string) => {
+    setUrl(val)
+    setIsPlaylist(isPlaylistUrl(val))
+  }
+
+  const handleImport = async (asPlaylist = false) => {
     if (!url.trim()) return
     setStep('downloading')
     setPercent(0)
     setError(null)
+    setEnrichedResult(null)
 
     const unsubStatus = window.musicApp.system.onImportStatus((s) => {
       setStep(s.step as Step)
@@ -41,13 +61,18 @@ export function ImportUrlDialog() {
     })
     unsubRef.current.push(unsubStatus)
 
-    const unsubEnriched = window.musicApp.system.onImportEnriched(async () => {
+    const unsubEnriched = window.musicApp.system.onImportEnriched(async (data) => {
+      setEnrichedResult(data.result)
       await loadTracks()
     })
     unsubRef.current.push(unsubEnriched)
 
     try {
-      await window.musicApp.library.importUrl(url.trim())
+      if (asPlaylist) {
+        await window.musicApp.library.importPlaylist(url.trim())
+      } else {
+        await window.musicApp.library.importUrl(url.trim())
+      }
       setStep('done')
       await loadTracks()
     } catch (e) {
@@ -65,6 +90,8 @@ export function ImportUrlDialog() {
     setStep('idle')
     setPercent(0)
     setError(null)
+    setEnrichedResult(null)
+    setIsPlaylist(false)
   }
 
   return (
@@ -89,39 +116,92 @@ export function ImportUrlDialog() {
           </div>
 
           <p className="text-xs text-neutral-500 mb-4">
-            YouTube, SoundCloud 등의 URL을 입력하면 AI가 곡 정보를 자동으로 수집합니다.
+            YouTube · SoundCloud URL을 입력하면 AI가 장르와 무드를 자동으로 분류합니다.
           </p>
 
           <input
             type="text"
             placeholder="https://youtube.com/watch?v=..."
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && step === 'idle' && handleImport()}
-            disabled={step !== 'idle' && step !== 'error' && step !== 'done'}
-            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500 disabled:opacity-50 mb-4"
+            onChange={(e) => handleUrlChange(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !isActive && handleImport(false)}
+            disabled={isActive}
+            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500 disabled:opacity-50 mb-3"
           />
 
-          {/* Progress */}
-          {(step === 'downloading' || step === 'analyzing') && (
+          {/* Playlist hint */}
+          {isPlaylist && step === 'idle' && (
+            <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <ListMusic size={12} className="text-blue-400 flex-shrink-0" />
+              <span className="text-xs text-blue-400">플레이리스트가 감지됐습니다</span>
+            </div>
+          )}
+
+          {/* AI Step progress */}
+          {isActive && (
             <div className="mb-4">
               <div className="flex items-center gap-2 text-xs text-neutral-400 mb-2">
                 <Loader2 size={12} className="animate-spin" />
-                {step === 'downloading' ? `다운로드 중… ${Math.round(percent)}%` : 'AI가 곡 정보를 분석 중…'}
+                {STEP_LABELS[step]}
+                {step === 'downloading' && ` ${Math.round(percent)}%`}
               </div>
               <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-white rounded-full transition-all duration-300"
-                  style={{ width: step === 'analyzing' ? '100%' : `${percent}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    step === 'ai-searching' || step === 'ai-classifying'
+                      ? 'bg-violet-500 animate-pulse'
+                      : 'bg-white'
+                  }`}
+                  style={{
+                    width: step === 'metadata' || step === 'ai-searching' || step === 'ai-classifying'
+                      ? '100%'
+                      : `${percent}%`
+                  }}
                 />
+              </div>
+
+              {/* AI step indicators */}
+              <div className="flex gap-3 mt-2">
+                {(['downloading', 'metadata', 'ai-searching', 'ai-classifying'] as const).map((s, i) => {
+                  const steps: Step[] = ['downloading', 'metadata', 'ai-searching', 'ai-classifying']
+                  const currentIdx = steps.indexOf(step)
+                  const isDone = currentIdx > i
+                  const isCurrent = currentIdx === i
+                  return (
+                    <div key={s} className="flex items-center gap-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-green-500' : isCurrent ? 'bg-violet-500 animate-pulse' : 'bg-neutral-700'}`} />
+                      <span className={`text-[9px] ${isCurrent ? 'text-neutral-300' : isDone ? 'text-neutral-500' : 'text-neutral-700'}`}>
+                        {['다운로드', '파싱', '검색', '분류'][i]}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
+          {/* Done state */}
           {step === 'done' && (
-            <div className="flex items-center gap-2 text-xs text-green-400 mb-4">
-              <CheckCircle2 size={12} />
-              가져오기 완료! AI 분석은 백그라운드에서 계속됩니다.
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-xs text-green-400 mb-2">
+                <CheckCircle2 size={12} />
+                가져오기 완료!
+              </div>
+              {enrichedResult && (
+                <div className="px-3 py-2 bg-neutral-800 rounded-lg space-y-1">
+                  <div className="flex gap-2">
+                    <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full font-medium">
+                      {enrichedResult.genre}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full font-medium">
+                      {enrichedResult.mood}
+                    </span>
+                  </div>
+                  {enrichedResult.summary && (
+                    <p className="text-[11px] text-neutral-500 leading-relaxed">{enrichedResult.summary}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -136,9 +216,19 @@ export function ImportUrlDialog() {
             >
               닫기
             </button>
+            {isPlaylist && step === 'idle' && (
+              <button
+                onClick={() => handleImport(true)}
+                disabled={!url.trim()}
+                className="px-3 py-1.5 text-xs bg-neutral-700 text-neutral-200 rounded-lg hover:bg-neutral-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                <ListMusic size={11} />
+                전체 가져오기
+              </button>
+            )}
             <button
-              onClick={handleImport}
-              disabled={!url.trim() || (step !== 'idle' && step !== 'error')}
+              onClick={() => handleImport(false)}
+              disabled={!url.trim() || isActive}
               className="px-4 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-neutral-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               가져오기
@@ -149,5 +239,3 @@ export function ImportUrlDialog() {
     </Dialog.Root>
   )
 }
-
-export { PLATFORM_ICONS }
