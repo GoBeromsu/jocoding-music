@@ -84,57 +84,13 @@ export function registerLibraryHandlers(): void {
   })
 
   ipcMain.handle('library:get-albums', () => {
-    const tracks = libraryStore.getAll()
-    const albumMap = new Map<string, {
-      title: string; artistName: string | null; year: number | null
-      coverArtPath: string | null; trackCount: number
-    }>()
-
-    for (const t of tracks) {
-      if (!t.albumTitle) continue
-      const key = `${t.albumTitle}|||${t.artistName ?? ''}`
-      const existing = albumMap.get(key)
-      if (existing) {
-        existing.trackCount++
-      } else {
-        albumMap.set(key, {
-          title: t.albumTitle,
-          artistName: t.artistName,
-          year: t.year,
-          coverArtPath: t.coverArtPath,
-          trackCount: 1,
-        })
-      }
-    }
-
-    return Array.from(albumMap.values()).sort((a, b) =>
-      (a.artistName ?? '').localeCompare(b.artistName ?? '') || a.title.localeCompare(b.title)
-    )
+    // Album grouping is done client-side via derivedAlbums() in libraryStore
+    return libraryStore.getAll().map(toTrackRow)
   })
 
   ipcMain.handle('library:get-artists', () => {
-    const tracks = libraryStore.getAll()
-    const artistMap = new Map<string, { name: string; albumCount: number; trackCount: number }>()
-    const albumSets = new Map<string, Set<string>>()
-
-    for (const t of tracks) {
-      if (!t.artistName) continue
-      const name = t.artistName
-      if (!artistMap.has(name)) {
-        artistMap.set(name, { name, albumCount: 0, trackCount: 0 })
-        albumSets.set(name, new Set())
-      }
-      artistMap.get(name)!.trackCount++
-      if (t.albumTitle) albumSets.get(name)!.add(t.albumTitle)
-    }
-
-    for (const [name, set] of albumSets) {
-      artistMap.get(name)!.albumCount = set.size
-    }
-
-    return Array.from(artistMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    )
+    // Artist grouping is done client-side via derivedArtists() in libraryStore
+    return libraryStore.getAll().map(toTrackRow)
   })
 
   ipcMain.handle('library:delete-track', (_, id: string) => {

@@ -90,6 +90,11 @@ declare global {
         ) => () => void
         onImportStatus: (cb: (status: { step: string; percent: number }) => void) => () => void
         onImportEnriched: (cb: (data: { trackId: string; result: EnrichedResult }) => void) => () => void
+        onImportError: (cb: (data: { trackId: string; message: string }) => void) => () => void
+      }
+      settings: {
+        getApiKey: () => Promise<string | null>
+        setApiKey: (key: string) => Promise<void>
       }
     }
   }

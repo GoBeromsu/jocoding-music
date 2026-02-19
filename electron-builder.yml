@@ -11,9 +11,9 @@ files:
   - dist-electron/**/*
   - "!**/*.map"
 
-asarUnpack:
-  - "node_modules/better-sqlite3/build/Release/*.node"
-  - "node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+extraResources:
+  - from: build/bin/yt-dlp
+    to: bin/yt-dlp
 
 mac:
   target:
@@ -22,7 +22,8 @@ mac:
         - arm64
         - x64
   category: public.app-category.music
-  hardenedRuntime: true
+  identity: '-'
+  hardenedRuntime: false
   gatekeeperAssess: false
 
 win:
@@ -42,4 +43,6 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 
-publish: null
+publish:
+  provider: github
+  releaseType: release

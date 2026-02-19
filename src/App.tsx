@@ -1,10 +1,13 @@
+import { Toaster } from 'react-hot-toast'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MainContent } from '@/components/layout/MainContent'
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { useThemeStore } from '@/store/themeStore'
+import { useIpcToasts } from '@/hooks/useIpcToasts'
 
 export default function App() {
   const { resolved } = useThemeStore()
+  useIpcToasts()
   return (
     <div className={`flex flex-col h-screen bg-neutral-950 text-neutral-100 overflow-hidden select-none${resolved === 'light' ? ' light' : ''}`}>
       {/* macOS traffic light drag region */}
@@ -19,6 +22,7 @@ export default function App() {
       </div>
 
       <PlayerBar />
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#262626', color: '#e5e5e5', fontSize: '13px', borderRadius: '8px' }, duration: 4000 }} />
     </div>
   )
 }

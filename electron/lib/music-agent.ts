@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { settingsStore } from './settings-store'
 
 export interface AgentInput {
   title: string
@@ -41,7 +42,11 @@ Respond ONLY with a JSON object in this exact shape (no markdown, no explanation
 If you cannot find a platform link, omit it from the array. Only include links you are confident are correct.`
 
 export async function enrichMusicMetadata(input: AgentInput): Promise<AgentResult> {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const apiKey = settingsStore.get().openaiApiKey || process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('No OpenAI API key available. Please set one in Settings.')
+  }
+  const client = new OpenAI({ apiKey })
 
   const userPrompt = `Song title: "${input.title}"
 Artist: "${input.artist}"

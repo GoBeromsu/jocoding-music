@@ -3,6 +3,7 @@ import path from 'path'
 import { pathToFileURL } from 'url'
 import { config } from 'dotenv'
 import { libraryStore } from './lib/library-store'
+import { settingsStore } from './lib/settings-store'
 import { registerAllHandlers } from './ipc/index'
 
 // Load .env from project root (dev) or resources dir (packaged)
@@ -62,6 +63,10 @@ app.whenReady().then(() => {
     const filePath = decodeURIComponent(rawPath)
     return net.fetch(pathToFileURL(filePath).toString())
   })
+
+  settingsStore.init(app.getPath('userData'))
+  const savedKey = settingsStore.get().openaiApiKey
+  if (savedKey) process.env.OPENAI_API_KEY = savedKey
 
   libraryStore.init(path.join(app.getPath('userData'), 'library'))
   registerAllHandlers()
