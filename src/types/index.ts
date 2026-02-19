@@ -16,6 +16,7 @@ export interface Track {
   playCount: number
   dateAdded: number
   trackNumber: number | null
+  tags: string[]
 }
 
 export interface EnrichedResult {
@@ -55,6 +56,15 @@ export interface DashboardStats {
   recentTracks: TrackStats[]
 }
 
+export interface Folder {
+  id: string
+  name: string
+  parentId: string | null
+  trackIds: string[]
+  createdAt: number
+  modifiedAt: number
+}
+
 declare global {
   interface Window {
     musicApp: {
@@ -63,7 +73,7 @@ declare global {
         getTrack: (id: string) => Promise<Track | null>
         searchTracks: (query: string) => Promise<Track[]>
         deleteTrack: (id: string) => Promise<void>
-        updateTrack: (id: string, patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>) => Promise<void>
+        updateTrack: (id: string, patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite' | 'tags'>>) => Promise<void>
         importUrl: (url: string) => Promise<ImportUrlResult>
         importPlaylist: (url: string) => Promise<{ trackIds: string[]; count: number }>
       }
@@ -90,6 +100,8 @@ declare global {
         setApiKey: (key: string) => Promise<void>
         getCredits: () => Promise<number>
         useCredit: () => Promise<{ success: boolean; remaining: number }>
+        getDownloadQuality: () => Promise<'best' | '192k' | '128k'>
+        setDownloadQuality: (quality: 'best' | '192k' | '128k') => Promise<void>
       }
       dashboard: {
         getStats: () => Promise<DashboardStats>
@@ -102,6 +114,14 @@ declare global {
           failed: number
           results: { id: string; success: boolean; error?: string }[]
         }>
+      }
+      folders: {
+        getFolders: () => Promise<Folder[]>
+        createFolder: (name: string) => Promise<Folder>
+        updateFolder: (id: string, patch: { name: string }) => Promise<void>
+        deleteFolder: (id: string) => Promise<void>
+        addTrackToFolder: (folderId: string, trackId: string) => Promise<void>
+        removeTrackFromFolder: (folderId: string, trackId: string) => Promise<void>
       }
     }
   }

@@ -59,6 +59,10 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.invoke('settings:get-credits'),
     useCredit: () =>
       ipcRenderer.invoke('settings:use-credit'),
+    getDownloadQuality: () =>
+      ipcRenderer.invoke('settings:get-download-quality'),
+    setDownloadQuality: (quality: string) =>
+      ipcRenderer.invoke('settings:set-download-quality', quality),
   },
 
   dashboard: {
@@ -71,5 +75,20 @@ contextBridge.exposeInMainWorld('musicApp', {
   dev: {
     backfillTags: () =>
       ipcRenderer.invoke('dev:backfill-tags'),
+  },
+
+  folders: {
+    getFolders: () =>
+      ipcRenderer.invoke('library:get-folders'),
+    createFolder: (name: string) =>
+      ipcRenderer.invoke('library:create-folder', name),
+    updateFolder: (id: string, patch: object) =>
+      ipcRenderer.invoke('library:update-folder', id, patch),
+    deleteFolder: (id: string) =>
+      ipcRenderer.invoke('library:delete-folder', id),
+    addTrackToFolder: (folderId: string, trackId: string) =>
+      ipcRenderer.invoke('library:add-track-to-folder', folderId, trackId),
+    removeTrackFromFolder: (folderId: string, trackId: string) =>
+      ipcRenderer.invoke('library:remove-track-from-folder', folderId, trackId),
   },
 })

@@ -1,14 +1,18 @@
 import fs from 'fs'
 import path from 'path'
 
+export type DownloadQuality = 'best' | '192k' | '128k'
+
 export interface AppSettings {
   openaiApiKey: string | null
   credits: number
+  downloadQuality: DownloadQuality
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   openaiApiKey: null,
   credits: 10,
+  downloadQuality: 'best',
 }
 
 let settingsPath = ''

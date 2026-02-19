@@ -1,11 +1,44 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, ArrowUp, ArrowDown } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useLibraryStore } from '@/store/libraryStore'
+import { useLibraryStore, type SortField } from '@/store/libraryStore'
 import { usePlayerStore } from '@/store/playerStore'
 import { TrackMetadataPanel } from '@/components/TrackMetadataPanel'
 import { Dashboard } from '@/components/layout/Dashboard'
 import type { Track } from '@/types/index'
+
+const SORT_LABELS: Record<SortField, string> = {
+  dateAdded: '추가일',
+  modifiedAt: '수정일',
+  title: '제목',
+  artistName: '아티스트',
+  playCount: '재생 수',
+  filePath: '파일 경로',
+}
+
+function sortTracks(tracks: Track[], field: SortField, dir: 'asc' | 'desc'): Track[] {
+  return [...tracks].sort((a, b) => {
+    let av: string | number | null = null
+    let bv: string | number | null = null
+
+    if (field === 'title') { av = a.title; bv = b.title }
+    else if (field === 'artistName') { av = a.artistName; bv = b.artistName }
+    else if (field === 'playCount') { av = a.playCount; bv = b.playCount }
+    else if (field === 'dateAdded') { av = a.dateAdded; bv = b.dateAdded }
+    else if (field === 'filePath') { av = a.filePath; bv = b.filePath }
+    else if (field === 'modifiedAt') { av = a.dateAdded; bv = b.dateAdded } // fallback to dateAdded
+
+    // null always last
+    if (av === null && bv === null) return 0
+    if (av === null) return 1
+    if (bv === null) return -1
+
+    const cmp = typeof av === 'string'
+      ? av.localeCompare(bv as string)
+      : (av as number) - (bv as number)
+    return dir === 'asc' ? cmp : -cmp
+  })
+}
 
 export function MainContent() {
   const {
@@ -13,6 +46,9 @@ export function MainContent() {
     searchQuery, searchResults,
     loadTracks, search,
     refreshTrack, updateTrack, deleteTrack,
+    sortField, sortDir, setSortField, setSortDir,
+    folders, selectedFolderId,
+    addTrackToFolder, loadFolders,
   } = useLibraryStore()
   const { setTrack } = usePlayerStore()
   const [localQuery, setLocalQuery] = useState('')
@@ -23,12 +59,14 @@ export function MainContent() {
 
   // Context menu state
   const [ctxMenu, setCtxMenu] = useState<{ trackId: string; x: number; y: number } | null>(null)
+  const [folderSubMenu, setFolderSubMenu] = useState(false)
 
   // Pending deletes for undo
   const pendingDeletes = useRef(new Set<string>())
 
   useEffect(() => {
     loadTracks()
+    loadFolders()
   }, [])
 
   // Refresh selected track when it gets enriched
@@ -46,7 +84,7 @@ export function MainContent() {
   // Dismiss context menu on outside click
   useEffect(() => {
     if (!ctxMenu) return
-    const dismiss = () => setCtxMenu(null)
+    const dismiss = () => { setCtxMenu(null); setFolderSubMenu(false) }
     window.addEventListener('click', dismiss)
     return () => window.removeEventListener('click', dismiss)
   }, [ctxMenu])
@@ -94,12 +132,33 @@ export function MainContent() {
     e.stopPropagation()
     let x = e.clientX
     const y = e.clientY
-    if (x + 160 > window.innerWidth) x -= 160
+    if (x + 180 > window.innerWidth) x -= 180
     setCtxMenu({ trackId, x, y })
+    setFolderSubMenu(false)
   }
 
-  const rawTracks = searchQuery ? searchResults : tracks
-  const displayTracks = rawTracks.filter(t => !pendingDeletes.current.has(t.id))
+  // Compute display tracks: search → folder filter → sort
+  const baseTracks = searchQuery ? searchResults : tracks
+  let filteredTracks = baseTracks.filter(t => !pendingDeletes.current.has(t.id))
+
+  if (selectedFolderId === 'favorites') {
+    filteredTracks = filteredTracks.filter(t => t.isFavorite)
+  } else if (selectedFolderId === 'uncategorized') {
+    const allFolderTrackIds = new Set(folders.flatMap(f => f.trackIds))
+    filteredTracks = filteredTracks.filter(t => !allFolderTrackIds.has(t.id))
+  } else if (selectedFolderId === 'untagged') {
+    filteredTracks = filteredTracks.filter(t => !t.tags || t.tags.length === 0)
+  } else if (selectedFolderId?.startsWith('tag:')) {
+    const tag = selectedFolderId.slice(4)
+    filteredTracks = filteredTracks.filter(t => t.tags?.includes(tag))
+  } else if (selectedFolderId) {
+    const folder = folders.find(f => f.id === selectedFolderId)
+    if (folder) {
+      filteredTracks = filteredTracks.filter(t => folder.trackIds.includes(t.id))
+    }
+  }
+
+  const displayTracks = sortTracks(filteredTracks, sortField, sortDir)
 
   if (activeView === 'dashboard') {
     return (
@@ -114,17 +173,38 @@ export function MainContent() {
   return (
     <main className="flex-1 flex overflow-hidden bg-neutral-950">
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Search bar */}
+        {/* Search bar + Sort */}
         <div className="flex-shrink-0 px-6 py-3 border-b border-neutral-800">
-          <div className="relative max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
-            <input
-              type="text"
-              placeholder="Search by title, artist, or genre…"
-              value={localQuery}
-              onChange={e => handleSearch(e.target.value)}
-              className="input-base pl-8 py-1.5 text-sm"
-            />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <input
+                type="text"
+                placeholder="Search by title, artist, or genre…"
+                value={localQuery}
+                onChange={e => handleSearch(e.target.value)}
+                className="input-base pl-8 py-1.5 text-sm w-full"
+              />
+            </div>
+            {/* Sort controls */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <select
+                value={sortField}
+                onChange={e => setSortField(e.target.value as SortField)}
+                className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-neutral-600"
+              >
+                {(Object.entries(SORT_LABELS) as [SortField, string][]).map(([field, label]) => (
+                  <option key={field} value={field}>{label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+                className="p-1.5 rounded-md bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-100 transition-colors"
+                title={sortDir === 'asc' ? '오름차순' : '내림차순'}
+              >
+                {sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -164,6 +244,32 @@ export function MainContent() {
           >
             {ctxTrack.isFavorite ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가'}
           </button>
+          {folders.length > 0 && (
+            <div
+              className="ctx-menu-item flex items-center justify-between"
+              onMouseEnter={() => setFolderSubMenu(true)}
+              onMouseLeave={() => setFolderSubMenu(false)}
+            >
+              <span>폴더에 추가 →</span>
+              {folderSubMenu && (
+                <div className="absolute left-full top-0 ml-1 ctx-menu min-w-[140px]">
+                  {folders.map(f => (
+                    <button
+                      key={f.id}
+                      className="ctx-menu-item"
+                      onClick={() => {
+                        addTrackToFolder(f.id, ctxMenu.trackId)
+                        setCtxMenu(null)
+                        setFolderSubMenu(false)
+                      }}
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <button
             className="ctx-menu-item-danger"
             onClick={() => {

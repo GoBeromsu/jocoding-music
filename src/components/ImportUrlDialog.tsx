@@ -97,7 +97,7 @@ export function ImportUrlDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
       <Dialog.Trigger asChild>
-        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-neutral-100 text-neutral-950 hover:bg-neutral-200 transition-colors">
+        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-neutral-800 text-neutral-100 hover:bg-neutral-700 border border-neutral-700 transition-colors">
           <Link2 size={14} />
           + 노래 추가
         </button>

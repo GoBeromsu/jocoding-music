@@ -8,6 +8,12 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.ReactN
   { value: 'light',  label: 'Light',  icon: <Sun    size={15} /> },
 ]
 
+const QUALITY_OPTIONS: { value: 'best' | '192k' | '128k'; label: string }[] = [
+  { value: 'best', label: '최고 품질' },
+  { value: '192k', label: '192 kbps' },
+  { value: '128k', label: '128 kbps' },
+]
+
 export function SettingsDialog() {
   const [open, setOpen] = useState(false)
   const { preference, setTheme } = useThemeStore()
@@ -15,11 +21,13 @@ export function SettingsDialog() {
   const [showKey, setShowKey] = useState(false)
   const [saved, setSaved] = useState(false)
   const [credits, setCredits] = useState<number | null>(null)
+  const [downloadQuality, setDownloadQuality] = useState<'best' | '192k' | '128k'>('best')
 
   useEffect(() => {
     if (open) {
       window.musicApp.settings.getApiKey().then(key => setApiKey(key ?? ''))
       window.musicApp.settings.getCredits().then(setCredits)
+      window.musicApp.settings.getDownloadQuality().then(setDownloadQuality)
     }
   }, [open])
 
@@ -47,7 +55,7 @@ export function SettingsDialog() {
           <div className="absolute inset-0 bg-black/60" />
 
           <div
-            className="relative bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl w-80 p-5"
+            className="relative bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl w-80 p-5 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-sm font-semibold text-neutral-100 mb-4">설정</h2>
@@ -88,6 +96,30 @@ export function SettingsDialog() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Download Quality */}
+            <div className="mt-5">
+              <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">다운로드 품질</p>
+              <div className="flex gap-2">
+                {QUALITY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setDownloadQuality(opt.value)
+                      window.musicApp.settings.setDownloadQuality(opt.value)
+                    }}
+                    className={`flex-1 py-2 rounded-lg border text-xs transition-colors ${
+                      downloadQuality === opt.value
+                        ? 'border-neutral-100 text-neutral-100 bg-neutral-700'
+                        : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] text-neutral-600">다음 임포트부터 적용됩니다.</p>
             </div>
 
             {/* OpenAI API Key */}

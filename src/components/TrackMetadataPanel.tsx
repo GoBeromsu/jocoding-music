@@ -1,26 +1,37 @@
-import { useEffect, useState } from 'react'
-import { Music2, X, Loader2 } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { Music2, X, Loader2, Tag } from 'lucide-react'
 import type { Track, EnrichedResult } from '@/types/index'
+import { useLibraryStore } from '@/store/libraryStore'
 
 type EditableField = 'title' | 'artistName' | 'albumTitle'
 
 interface Props {
   track: Track
   onClose: () => void
-  onUpdate: (patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>) => void
+  onUpdate: (patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite' | 'tags'>>) => void
   onDelete: () => void
 }
 
 export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props) {
+  const { tracks } = useLibraryStore()
   const [enriched, setEnriched] = useState<EnrichedResult | null>(null)
   const [aiStep, setAiStep] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ field: EditableField; value: string } | null>(null)
+
+  // Tag editing
+  const [tagInput, setTagInput] = useState('')
+  const tagInputRef = useRef<HTMLInputElement>(null)
+
+  // All unique tags for autocomplete
+  const allTags = Array.from(new Set(tracks.flatMap(t => t.tags ?? []))).sort()
+  const currentTags: string[] = track.tags ?? []
 
   // Reset when track changes
   useEffect(() => {
     setEnriched(null)
     setAiStep(null)
     setEditing(null)
+    setTagInput('')
   }, [track.id])
 
   // Listen for AI enrichment events for this track
@@ -87,6 +98,23 @@ export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props
     )
   }
 
+  const addTag = (tag: string) => {
+    const trimmed = tag.trim()
+    if (!trimmed || currentTags.includes(trimmed)) return
+    const newTags = [...currentTags, trimmed]
+    onUpdate({ tags: newTags })
+    setTagInput('')
+  }
+
+  const removeTag = (tag: string) => {
+    const newTags = currentTags.filter(t => t !== tag)
+    onUpdate({ tags: newTags })
+  }
+
+  const suggestions = tagInput
+    ? allTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !currentTags.includes(t))
+    : []
+
   return (
     <div className="w-64 flex-shrink-0 border-l border-neutral-800 bg-neutral-900 flex flex-col overflow-y-auto">
       {/* Header */}
@@ -108,7 +136,7 @@ export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props
         </div>
       </div>
 
-      {/* Track Info — inline editable */}
+      {/* Track Info */}
       <div className="px-4 pb-4">
         <div className="flex items-start gap-1">
           {renderEditable('title', track.title, 'text-sm font-semibold text-neutral-100 leading-tight block')}
@@ -122,6 +150,63 @@ export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props
         </div>
         {renderEditable('artistName', track.artistName, 'text-xs text-neutral-500 mt-0.5 block truncate')}
         {renderEditable('albumTitle', track.albumTitle, 'text-xs text-neutral-600 mt-0.5 block truncate')}
+      </div>
+
+      {/* Tags Section */}
+      <div className="px-4 pb-4 border-t border-neutral-800 pt-3">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Tag size={11} className="text-neutral-500" />
+          <span className="section-label">태그</span>
+        </div>
+
+        {/* Tag chips */}
+        {currentTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {currentTags.map(tag => (
+              <span
+                key={tag}
+                className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded-full leading-none"
+              >
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="text-neutral-500 hover:text-red-400 transition-colors ml-0.5"
+                >
+                  <X size={9} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Tag input */}
+        <div className="relative">
+          <input
+            ref={tagInputRef}
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { addTag(tagInput); e.preventDefault() }
+              if (e.key === 'Escape') setTagInput('')
+            }}
+            placeholder="태그 추가…"
+            className="w-full bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 focus:outline-none focus:border-neutral-500 placeholder-neutral-600"
+          />
+          {/* Autocomplete suggestions */}
+          {suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-0.5 bg-neutral-800 border border-neutral-700 rounded-md overflow-hidden z-10 shadow-lg">
+              {suggestions.slice(0, 5).map(s => (
+                <button
+                  key={s}
+                  onClick={() => addTag(s)}
+                  className="w-full text-left px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* AI Section */}

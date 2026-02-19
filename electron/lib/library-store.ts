@@ -82,7 +82,7 @@ class LibraryStore {
     }
   }
 
-  update(id: string, patch: Partial<Pick<TrackMeta, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>): void {
+  update(id: string, patch: Partial<Pick<TrackMeta, 'title' | 'artistName' | 'albumTitle' | 'isFavorite' | 'tags'>>): void {
     const track = this.cache.get(id)
     if (track) this.upsert({ ...track, ...patch })
   }

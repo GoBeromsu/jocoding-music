@@ -4,6 +4,7 @@ import { registerUrlImportHandlers } from './url-import'
 import { registerSettingsHandlers } from './settings'
 import { registerDashboardHandlers } from './dashboard'
 import { registerDevHandlers } from './dev'
+import { registerFolderHandlers } from './folders'
 
 export function registerAllHandlers(): void {
   registerLibraryHandlers()
@@ -12,4 +13,5 @@ export function registerAllHandlers(): void {
   registerSettingsHandlers()
   registerDashboardHandlers()
   registerDevHandlers()
+  registerFolderHandlers()
 }

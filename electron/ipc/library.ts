@@ -121,6 +121,7 @@ function toTrackRow(t: TrackMeta) {
     playCount: t.playCount,
     dateAdded: t.dateAdded,
     trackNumber: t.trackNumber,
+    tags: t.tags ?? [],
   }
 }
 

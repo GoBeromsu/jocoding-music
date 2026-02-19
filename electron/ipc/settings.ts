@@ -27,4 +27,15 @@ export function registerSettingsHandlers(): void {
     const success = settingsStore.deductCredit()
     return { success, remaining: settingsStore.get().credits }
   })
+
+  ipcMain.handle('settings:get-download-quality', () => {
+    return settingsStore.get().downloadQuality ?? 'best'
+  })
+
+  ipcMain.handle('settings:set-download-quality', (_, quality: string) => {
+    const valid = ['best', '192k', '128k']
+    if (valid.includes(quality)) {
+      settingsStore.set({ downloadQuality: quality as import('../lib/settings-store').DownloadQuality })
+    }
+  })
 }

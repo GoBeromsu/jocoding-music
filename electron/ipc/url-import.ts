@@ -15,9 +15,10 @@ export function registerUrlImportHandlers(): void {
 
     // 1. Download audio
     win?.webContents.send('import:status', { step: 'downloading', percent: 0, trackId: id })
+    const quality = settingsStore.get().downloadQuality ?? 'best'
     const imported = await downloadAudio(url, destDir, (percent) => {
       win?.webContents.send('import:status', { step: 'downloading', percent, trackId: id })
-    })
+    }, quality)
 
     // 2. Parse metadata
     let durationMs = imported.durationMs
@@ -138,7 +139,8 @@ export function registerUrlImportHandlers(): void {
         // Reuse single import logic by invoking directly
         const id = libraryStore.newId()
         const destDir = libraryStore.getTrackDir(id)
-        const imported = await downloadAudio(urls[i], destDir)
+        const quality = settingsStore.get().downloadQuality ?? 'best'
+        const imported = await downloadAudio(urls[i], destDir, undefined, quality)
         let coverArtPath: string | null = null
         if (imported.thumbnailUrl) {
           const thumbPath = path.join(destDir, 'thumb.jpg')
