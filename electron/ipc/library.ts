@@ -32,6 +32,7 @@ export function registerLibraryHandlers(): void {
           id,
           filePath,
           isImported: false,
+          isFavorite: existing?.isFavorite ?? false,
           title: common.title ?? path.basename(filePath, path.extname(filePath)),
           artistName: common.artist ?? null,
           albumTitle: common.album ?? null,
@@ -95,6 +96,10 @@ export function registerLibraryHandlers(): void {
   ipcMain.handle('library:delete-track', (_, id: string) => {
     libraryStore.softDelete(id)
   })
+
+  ipcMain.handle('library:update-track', (_, id: string, patch: Parameters<typeof libraryStore.update>[1]) => {
+    libraryStore.update(id, patch)
+  })
 }
 
 function toTrackRow(t: TrackMeta) {
@@ -102,6 +107,7 @@ function toTrackRow(t: TrackMeta) {
     id: t.id,
     filePath: t.filePath,
     isImported: t.isImported,
+    isFavorite: t.isFavorite ?? false,
     title: t.title,
     artistName: t.artistName,
     albumTitle: t.albumTitle,

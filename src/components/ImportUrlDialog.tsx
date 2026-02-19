@@ -97,9 +97,9 @@ export function ImportUrlDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
       <Dialog.Trigger asChild>
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-neutral-500 hover:bg-neutral-800 hover:text-white transition-colors">
-          <Link2 size={15} />
-          Import from URL
+        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-neutral-100 text-neutral-950 hover:bg-neutral-200 transition-colors">
+          <Link2 size={14} />
+          + 노래 추가
         </button>
       </Dialog.Trigger>
 
@@ -107,16 +107,16 @@ export function ImportUrlDialog() {
         <Dialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-neutral-900 border border-neutral-700 rounded-xl p-6 shadow-2xl">
           <div className="flex items-center justify-between mb-4">
-            <Dialog.Title className="text-sm font-semibold text-white">Import from URL</Dialog.Title>
+            <Dialog.Title className="text-sm font-semibold text-neutral-100">노래 추가</Dialog.Title>
             <Dialog.Close asChild>
-              <button className="text-neutral-500 hover:text-white transition-colors">
+              <button className="text-neutral-500 hover:text-neutral-100 transition-colors">
                 <X size={16} />
               </button>
             </Dialog.Close>
           </div>
 
           <p className="text-xs text-neutral-500 mb-4">
-            YouTube · SoundCloud URL을 입력하면 AI가 장르와 무드를 자동으로 분류합니다.
+            URL을 붙여넣으면 AI가 곡 정보, 장르, 무드를 자동으로 채워줍니다.
           </p>
 
           <input
@@ -126,7 +126,7 @@ export function ImportUrlDialog() {
             onChange={(e) => handleUrlChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !isActive && handleImport(false)}
             disabled={isActive}
-            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500 disabled:opacity-50 mb-3"
+            className="input-base mb-3"
           />
 
           {/* Playlist hint */}
@@ -150,7 +150,7 @@ export function ImportUrlDialog() {
                   className={`h-full rounded-full transition-all duration-500 ${
                     step === 'ai-searching' || step === 'ai-classifying'
                       ? 'bg-violet-500 animate-pulse'
-                      : 'bg-white'
+                      : 'bg-neutral-100'
                   }`}
                   style={{
                     width: step === 'metadata' || step === 'ai-searching' || step === 'ai-classifying'
@@ -190,10 +190,10 @@ export function ImportUrlDialog() {
               {enrichedResult && (
                 <div className="px-3 py-2 bg-neutral-800 rounded-lg space-y-1">
                   <div className="flex gap-2">
-                    <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full font-medium">
+                    <span className="pill-genre">
                       {enrichedResult.genre}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full font-medium">
+                    <span className="pill-mood">
                       {enrichedResult.mood}
                     </span>
                   </div>
@@ -212,7 +212,7 @@ export function ImportUrlDialog() {
           <div className="flex gap-2 justify-end">
             <button
               onClick={handleClose}
-              className="px-3 py-1.5 text-xs text-neutral-400 hover:text-white transition-colors"
+              className="btn-ghost"
             >
               닫기
             </button>
@@ -220,7 +220,7 @@ export function ImportUrlDialog() {
               <button
                 onClick={() => handleImport(true)}
                 disabled={!url.trim()}
-                className="px-3 py-1.5 text-xs bg-neutral-700 text-neutral-200 rounded-lg hover:bg-neutral-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="btn-secondary flex items-center gap-1.5"
               >
                 <ListMusic size={11} />
                 전체 가져오기
@@ -229,7 +229,7 @@ export function ImportUrlDialog() {
             <button
               onClick={() => handleImport(false)}
               disabled={!url.trim() || isActive}
-              className="px-4 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-neutral-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-primary"
             >
               가져오기
             </button>

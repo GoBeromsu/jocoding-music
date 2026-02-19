@@ -1,0 +1,88 @@
+name: CI / Release macOS
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ── CI: main push / PR에서 타입 체크 + 빌드 검증 ─────────────────────────
+  ci:
+    name: Type check & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+  # ── Release: v* 태그 push 시 DMG 패키징 + GitHub Release 생성 ────────────
+  release-mac:
+    name: Package & Release DMG
+    runs-on: macos-latest
+    timeout-minutes: 30
+    # 태그 push 또는 수동 트리거에서만 실행
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Download yt-dlp universal binary
+        run: |
+          mkdir -p build/bin
+          curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos" \
+            -o build/bin/yt-dlp
+          chmod +x build/bin/yt-dlp
+
+      - run: pnpm build
+
+      - name: Package DMG + Publish to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            pnpm exec electron-builder --mac --publish always
+          else
+            pnpm exec electron-builder --mac --publish never
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-dmg-${{ github.sha }}
+          path: release/*.dmg
+          if-no-files-found: error

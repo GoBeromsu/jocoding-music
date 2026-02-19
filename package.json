@@ -13,7 +13,8 @@
     "dist:mac": "pnpm build && electron-builder --mac",
     "dist:win": "pnpm build && electron-builder --win",
     "dist:linux": "pnpm build && electron-builder --linux",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:demo": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",
