@@ -3,14 +3,15 @@ import { Search } from 'lucide-react'
 import { useLibraryStore } from '@/store/libraryStore'
 import { usePlayerStore } from '@/store/playerStore'
 import { TrackMetadataPanel } from '@/components/TrackMetadataPanel'
-import type { Track, Album, Artist } from '@/types/index'
+import { Dashboard } from '@/components/layout/Dashboard'
+import type { Track } from '@/types/index'
 
 export function MainContent() {
   const {
-    activeView, tracks, albums, artists,
+    activeView, tracks,
     searchQuery, searchResults,
     loadTracks, search,
-    setSelectedAlbum, setSelectedArtist,
+    refreshTrack,
   } = useLibraryStore()
   const { setTrack } = usePlayerStore()
   const [localQuery, setLocalQuery] = useState('')
@@ -19,6 +20,31 @@ export function MainContent() {
   useEffect(() => {
     loadTracks()
   }, [])
+
+  // Refresh selected track when it gets enriched
+  useEffect(() => {
+    const unsub = window.musicApp.system.onImportEnriched(async ({ trackId }) => {
+      await refreshTrack(trackId)
+      setSelectedTrack(prev => {
+        if (prev?.id === trackId) {
+          // will re-render with updated data from store
+          return prev
+        }
+        return prev
+      })
+    })
+    return unsub
+  }, [])
+
+  // After enrichment, update selectedTrack if it's the enriched track
+  const { tracks: allTracks } = useLibraryStore()
+  useEffect(() => {
+    if (!selectedTrack) return
+    const updated = allTracks.find(t => t.id === selectedTrack.id)
+    if (updated && (updated.genre !== selectedTrack.genre || updated.mood !== selectedTrack.mood)) {
+      setSelectedTrack(updated)
+    }
+  }, [allTracks])
 
   useEffect(() => {
     setLocalQuery('')
@@ -31,6 +57,14 @@ export function MainContent() {
 
   const displayTracks = searchQuery ? searchResults : tracks
 
+  if (activeView === 'dashboard') {
+    return (
+      <main className="flex-1 flex overflow-hidden bg-neutral-950">
+        <Dashboard />
+      </main>
+    )
+  }
+
   return (
     <main className="flex-1 flex overflow-hidden bg-neutral-950">
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -40,7 +74,7 @@ export function MainContent() {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
             <input
               type="text"
-              placeholder={activeView === 'tracks' ? 'Search tracks…' : `Search ${activeView}…`}
+              placeholder="Search songs, genres, moods…"
               value={localQuery}
               onChange={e => handleSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-neutral-800 rounded-md text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-600"
@@ -49,24 +83,16 @@ export function MainContent() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {activeView === 'tracks' && (
-            <TrackGrid
-              tracks={displayTracks}
-              selectedTrack={selectedTrack}
-              onSelect={(track) => setSelectedTrack(track)}
-              onPlay={(track) => { setTrack(track, displayTracks); setSelectedTrack(track) }}
-            />
-          )}
-          {activeView === 'albums' && (
-            <AlbumGrid albums={albums} onSelect={(title) => { setSelectedAlbum(title); loadTracks({ albumTitle: title }) }} />
-          )}
-          {activeView === 'artists' && (
-            <ArtistList artists={artists} onSelect={(name) => { setSelectedArtist(name); loadTracks({ artistName: name }) }} />
-          )}
+          <TrackGrid
+            tracks={displayTracks}
+            selectedTrack={selectedTrack}
+            onSelect={(track) => setSelectedTrack(track)}
+            onPlay={(track) => { setTrack(track, displayTracks); setSelectedTrack(track) }}
+          />
         </div>
       </div>
 
-      {selectedTrack && activeView === 'tracks' && (
+      {selectedTrack && (
         <TrackMetadataPanel track={selectedTrack} onClose={() => setSelectedTrack(null)} />
       )}
     </main>
@@ -83,9 +109,10 @@ function TrackGrid({ tracks, selectedTrack, onSelect, onPlay }: {
 
   if (tracks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-neutral-600">
-        <p className="text-sm">No tracks yet.</p>
-        <p className="text-xs mt-1">Add a folder from the sidebar to get started.</p>
+      <div className="flex flex-col items-center justify-center h-full text-neutral-600 gap-2">
+        <span className="text-4xl">🎵</span>
+        <p className="text-sm">아직 트랙이 없습니다.</p>
+        <p className="text-xs text-neutral-700">Import from URL로 YouTube/SoundCloud 음악을 추가하세요.</p>
       </div>
     )
   }
@@ -94,6 +121,7 @@ function TrackGrid({ tracks, selectedTrack, onSelect, onPlay }: {
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4">
       {tracks.map(track => {
         const isActive = currentTrack?.id === track.id
+        const isSelected = selectedTrack?.id === track.id
         const coverUrl = track.coverArtPath
           ? `music://localhost/${encodeURIComponent(track.coverArtPath)}`
           : null
@@ -103,8 +131,8 @@ function TrackGrid({ tracks, selectedTrack, onSelect, onPlay }: {
             key={track.id}
             onClick={() => onSelect(track)}
             onDoubleClick={() => onPlay(track)}
-            className={`flex flex-col items-start text-left group rounded-lg overflow-hidden
-              ${isActive ? 'ring-2 ring-white' : selectedTrack?.id === track.id ? 'ring-2 ring-neutral-500' : ''}`}
+            className={`flex flex-col items-start text-left group rounded-lg overflow-hidden p-1 transition-colors
+              ${isActive ? 'ring-2 ring-white rounded-lg' : isSelected ? 'ring-2 ring-neutral-500 rounded-lg' : 'hover:bg-neutral-900'}`}
           >
             <div className="w-full aspect-square bg-neutral-800 relative overflow-hidden rounded-lg mb-2">
               {coverUrl ? (
@@ -121,76 +149,27 @@ function TrackGrid({ tracks, selectedTrack, onSelect, onPlay }: {
             <span className="text-xs font-medium truncate w-full text-neutral-100 px-0.5">
               {track.title ?? 'Unknown Title'}
             </span>
-            <span className="text-xs text-neutral-500 truncate w-full px-0.5">
+            <span className="text-xs text-neutral-500 truncate w-full px-0.5 mb-1">
               {track.artistName ?? 'Unknown Artist'}
             </span>
+            {/* Genre / Mood pills */}
+            {(track.genre || track.mood) && (
+              <div className="flex gap-1 flex-wrap px-0.5">
+                {track.genre && (
+                  <span className="text-[9px] px-1.5 py-0.5 bg-violet-500/20 text-violet-400 rounded-full leading-none">
+                    {track.genre}
+                  </span>
+                )}
+                {track.mood && (
+                  <span className="text-[9px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full leading-none">
+                    {track.mood}
+                  </span>
+                )}
+              </div>
+            )}
           </button>
         )
       })}
-    </div>
-  )
-}
-
-function AlbumGrid({ albums, onSelect }: { albums: Album[]; onSelect: (title: string) => void }) {
-  if (albums.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-neutral-600 text-sm">
-        No albums yet.
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-6">
-      {albums.map(album => (
-        <button
-          key={`${album.title}|||${album.artistName ?? ''}`}
-          onClick={() => onSelect(album.title)}
-          className="flex flex-col items-start text-left group"
-        >
-          <div className="w-full aspect-square bg-neutral-800 rounded-lg mb-2 flex items-center justify-center text-neutral-600 group-hover:bg-neutral-700 transition-colors">
-            <span className="text-3xl">🎵</span>
-          </div>
-          <span className="text-sm font-medium truncate w-full text-neutral-100 group-hover:text-white">
-            {album.title}
-          </span>
-          <span className="text-xs text-neutral-500 truncate w-full">
-            {album.artistName ?? 'Unknown'} · {album.trackCount} tracks
-          </span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function ArtistList({ artists, onSelect }: { artists: Artist[]; onSelect: (name: string) => void }) {
-  if (artists.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-neutral-600 text-sm">
-        No artists yet.
-      </div>
-    )
-  }
-
-  return (
-    <div className="divide-y divide-neutral-800">
-      {artists.map(artist => (
-        <button
-          key={artist.name}
-          onClick={() => onSelect(artist.name)}
-          className="w-full flex items-center gap-4 px-6 py-3 hover:bg-neutral-800 transition-colors text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-lg flex-shrink-0">
-            🎤
-          </div>
-          <div>
-            <div className="text-sm font-medium text-neutral-100">{artist.name}</div>
-            <div className="text-xs text-neutral-500">
-              {artist.albumCount} albums · {artist.trackCount} tracks
-            </div>
-          </div>
-        </button>
-      ))}
     </div>
   )
 }

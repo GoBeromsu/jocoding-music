@@ -4,24 +4,18 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('musicApp', {
   library: {
-    scanFolder: (folderPath: string) =>
-      ipcRenderer.invoke('library:scan-folder', folderPath),
     getTracks: () =>
       ipcRenderer.invoke('library:get-tracks'),
     getTrack: (id: string) =>
       ipcRenderer.invoke('library:get-track', id),
     searchTracks: (query: string) =>
       ipcRenderer.invoke('library:search-tracks', query),
-    getAlbums: () =>
-      ipcRenderer.invoke('library:get-albums'),
-    getArtists: () =>
-      ipcRenderer.invoke('library:get-artists'),
     deleteTrack: (id: string) =>
       ipcRenderer.invoke('library:delete-track', id),
     importUrl: (url: string) =>
       ipcRenderer.invoke('track:import-url', url),
-    getPlatformLinks: (trackId: string) =>
-      ipcRenderer.invoke('track:get-platform-links', trackId),
+    importPlaylist: (url: string) =>
+      ipcRenderer.invoke('track:import-playlist', url),
   },
 
   player: {
@@ -31,27 +25,9 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.invoke('player:update-play-count', trackId),
   },
 
-  obsidian: {
-    selectVault: () =>
-      ipcRenderer.invoke('obsidian:select-vault'),
-    createNote: (trackId: string, vaultPath: string, content: string) =>
-      ipcRenderer.invoke('obsidian:create-note', trackId, vaultPath, content),
-    getNotesByTrack: (trackId: string) =>
-      ipcRenderer.invoke('obsidian:get-notes-by-track', trackId),
-    openNote: (notePath: string) =>
-      ipcRenderer.invoke('obsidian:open-note', notePath),
-  },
-
   system: {
-    selectFolder: () =>
-      ipcRenderer.invoke('system:select-folder'),
-    onLibraryScanProgress: (cb: (progress: { done: number; total: number }) => void) => {
-      const handler = (_: unknown, p: { done: number; total: number }) => cb(p)
-      ipcRenderer.on('library:scan-progress', handler)
-      return () => ipcRenderer.off('library:scan-progress', handler)
-    },
-    onImportStatus: (cb: (status: { step: string; percent: number }) => void) => {
-      const handler = (_: unknown, s: { step: string; percent: number }) => cb(s)
+    onImportStatus: (cb: (status: { step: string; percent: number; trackId?: string }) => void) => {
+      const handler = (_: unknown, s: { step: string; percent: number; trackId?: string }) => cb(s)
       ipcRenderer.on('import:status', handler)
       return () => ipcRenderer.off('import:status', handler)
     },
@@ -65,6 +41,11 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.on('import:error', handler)
       return () => ipcRenderer.off('import:error', handler)
     },
+    onApiKeyUpdated: (cb: (data: { active: boolean }) => void) => {
+      const handler = (_: unknown, d: { active: boolean }) => cb(d)
+      ipcRenderer.on('settings:api-key-updated', handler)
+      return () => ipcRenderer.off('settings:api-key-updated', handler)
+    },
   },
 
   settings: {
@@ -72,5 +53,16 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.invoke('settings:get-api-key'),
     setApiKey: (key: string) =>
       ipcRenderer.invoke('settings:set-api-key', key),
+    getCredits: () =>
+      ipcRenderer.invoke('settings:get-credits'),
+    useCredit: () =>
+      ipcRenderer.invoke('settings:use-credit'),
+  },
+
+  dashboard: {
+    getStats: () =>
+      ipcRenderer.invoke('dashboard:get-stats'),
+    generateTasteSummary: () =>
+      ipcRenderer.invoke('dashboard:generate-taste-summary'),
   },
 })
