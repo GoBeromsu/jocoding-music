@@ -107,17 +107,35 @@ docs/<short-description>      # 문서만 수정
 
 예시: `feat/url-import-progress`, `fix/audio-stream-cors`
 
+### Issue 라벨 체계
+
+| 카테고리 | 라벨 | 용도 |
+|---|---|---|
+| **타입** | `feat` `fix` `chore` `refactor` `docs` | 작업 종류 |
+| **우선순위** | `priority: high` `priority: medium` `priority: low` | `high` = 데모 전 필수 |
+| **상태** | `status: in progress` `status: blocked` | 진행 상황 |
+| **영역** | `area: electron` `area: ui` `area: ai-agent` `area: ipc` `area: library` | 수정 범위 |
+
 ### 작업 흐름
 
-1. `main`에서 브랜치 생성
+1. **Issue 생성** — 타입 + 우선순위 + 영역 라벨 부착
+   ```bash
+   gh issue create --title "feat: URL 임포트 진행률 표시" \
+     --label "feat,priority: high,area: ui"
+   ```
+2. `main`에서 브랜치 생성 (Issue 번호 포함)
    ```bash
    git checkout main && git pull
-   git checkout -b feat/<description>
+   git checkout -b feat/url-import-progress   # or feat/12-url-import-progress
    ```
-2. 작업 → 커밋 (Conventional Commits)
-3. PR 생성 → `main` 타겟
-4. Squash merge (커밋 히스토리 정리)
-5. 머지 후 브랜치 삭제
+3. 작업 → 커밋 (Conventional Commits)
+   - 커밋 메시지에 `closes #<issue-number>` 추가하면 머지 시 자동 닫힘
+4. PR 생성 → `main` 타겟
+   ```bash
+   gh pr create --title "feat: URL 임포트 진행률 표시" \
+     --body "closes #12"
+   ```
+5. Squash merge → 브랜치 + Issue 자동 닫힘
 
 ### PR 규칙
 
