@@ -3,10 +3,12 @@ import path from 'path'
 
 export interface AppSettings {
   openaiApiKey: string | null
+  credits: number
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   openaiApiKey: null,
+  credits: 10,
 }
 
 let settingsPath = ''
@@ -34,5 +36,12 @@ export const settingsStore = {
   set(partial: Partial<AppSettings>): void {
     cache = { ...cache, ...partial }
     fs.writeFileSync(settingsPath, JSON.stringify(cache, null, 2), 'utf-8')
+  },
+
+  deductCredit(): boolean {
+    if (cache.credits <= 0) return false
+    cache.credits = cache.credits - 1
+    fs.writeFileSync(settingsPath, JSON.stringify(cache, null, 2), 'utf-8')
+    return true
   },
 }

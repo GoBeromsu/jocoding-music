@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ExternalLink } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
 import { formatDuration } from '@/lib/utils'
 
@@ -52,21 +52,6 @@ export function PlayerBar() {
     if (audioRef.current) audioRef.current.currentTime = ms / 1000
   }
 
-  const handleObsidian = async () => {
-    if (!currentTrack) return
-    const vault = await window.musicApp.obsidian.selectVault()
-    if (!vault) return
-    await window.musicApp.obsidian.createNote(
-      currentTrack.id,
-      vault,
-      `## Notes\n\n> Playing: ${currentTrack.title}\n`
-    )
-    const notes = await window.musicApp.obsidian.getNotesByTrack(currentTrack.id)
-    if (notes.length > 0) {
-      await window.musicApp.obsidian.openNote(notes[0].notePath)
-    }
-  }
-
   const coverUrl = currentTrack?.coverArtPath
     ? `music://localhost/${encodeURIComponent(currentTrack.coverArtPath)}`
     : null
@@ -98,6 +83,11 @@ export function PlayerBar() {
               <p className="text-[11px] truncate text-neutral-500 leading-tight mt-0.5">
                 {currentTrack.artistName ?? 'Unknown Artist'}
               </p>
+              {(currentTrack.genre || currentTrack.mood) && (
+                <p className="text-[10px] truncate text-neutral-600 leading-tight mt-0.5">
+                  {[currentTrack.genre, currentTrack.mood].filter(Boolean).join(' · ')}
+                </p>
+              )}
             </>
           ) : (
             <p className="text-xs text-neutral-600">No track selected</p>
@@ -141,8 +131,8 @@ export function PlayerBar() {
         </div>
       </div>
 
-      {/* Volume + Obsidian */}
-      <div className="flex items-center gap-2 flex-shrink-0 w-40 justify-end">
+      {/* Volume */}
+      <div className="flex items-center gap-2 flex-shrink-0 w-32 justify-end">
         <button
           onClick={() => setVolume(volume > 0 ? 0 : 0.8)}
           className="text-neutral-400 hover:text-white transition-colors"
@@ -158,14 +148,6 @@ export function PlayerBar() {
           onChange={e => setVolume(Number(e.target.value))}
           className="w-20 h-1 accent-white cursor-pointer"
         />
-        <button
-          onClick={handleObsidian}
-          disabled={!currentTrack}
-          title="Open in Obsidian"
-          className="text-neutral-500 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed ml-1"
-        >
-          <ExternalLink size={14} />
-        </button>
       </div>
     </footer>
   )

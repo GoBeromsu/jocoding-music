@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, Monitor, Moon, Sun, Eye, EyeOff } from 'lucide-react'
+import { Settings, Monitor, Moon, Sun, Eye, EyeOff, Zap } from 'lucide-react'
 import { useThemeStore, type ThemePreference } from '@/store/themeStore'
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.ReactNode }[] = [
@@ -14,12 +14,12 @@ export function SettingsDialog() {
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
     if (open) {
-      window.musicApp.settings.getApiKey().then(key => {
-        setApiKey(key ?? '')
-      })
+      window.musicApp.settings.getApiKey().then(key => setApiKey(key ?? ''))
+      window.musicApp.settings.getCredits().then(setCredits)
     }
   }, [open])
 
@@ -44,15 +44,30 @@ export function SettingsDialog() {
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setOpen(false)}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60" />
 
-          {/* Dialog */}
           <div
             className="relative bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl w-80 p-5"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-sm font-semibold text-neutral-100 mb-4">Settings</h2>
+
+            {/* Credits */}
+            <div className="mb-5 px-3 py-2.5 bg-neutral-800 rounded-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap size={14} className="text-yellow-400" />
+                <span className="text-xs text-neutral-300">AI Credits</span>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-semibold text-white">
+                  {credits ?? '—'}
+                </span>
+                <span className="text-[10px] text-neutral-500 ml-1">remaining</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-600 mb-5 -mt-3 px-1">
+              AI 분석 1회 = 1 크레딧 · 기본 10 크레딧 무료 제공
+            </p>
 
             {/* Appearance */}
             <div>
@@ -83,6 +98,7 @@ export function SettingsDialog() {
                   type={showKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={e => setApiKey(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
                   placeholder="sk-..."
                   className="flex-1 bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-xs text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
                 />
@@ -95,7 +111,7 @@ export function SettingsDialog() {
                 </button>
               </div>
               <p className="mt-1.5 text-[10px] text-neutral-600">
-                Stored locally. Needed for AI metadata enrichment.
+                로컬 저장. AI 장르·무드 분류에 필요합니다.
               </p>
             </div>
 
@@ -104,13 +120,13 @@ export function SettingsDialog() {
                 onClick={handleSave}
                 className="px-4 py-1.5 text-xs bg-neutral-600 hover:bg-neutral-500 text-white rounded-md transition-colors"
               >
-                {saved ? 'Saved!' : 'Save'}
+                {saved ? '저장됨!' : '저장'}
               </button>
               <button
                 onClick={() => setOpen(false)}
                 className="px-4 py-1.5 text-xs bg-neutral-700 hover:bg-neutral-600 text-neutral-100 rounded-md transition-colors"
               >
-                Done
+                닫기
               </button>
             </div>
           </div>
