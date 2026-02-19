@@ -1,0 +1,85 @@
+import { app, BrowserWindow, protocol, net } from 'electron'
+import path from 'path'
+import { pathToFileURL } from 'url'
+import { config } from 'dotenv'
+import { libraryStore } from './lib/library-store'
+import { registerAllHandlers } from './ipc/index'
+
+// Load .env from project root (dev) or resources dir (packaged)
+config({ path: app.isPackaged
+  ? path.join(process.resourcesPath, '.env')
+  : path.join(__dirname, '../.env'),
+})
+
+// Must be called before app is ready
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'music',
+    privileges: {
+      secure: true,
+      standard: true,
+      stream: true,
+      supportFetchAPI: true,
+    },
+  },
+])
+
+let mainWindow: BrowserWindow | null = null
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    backgroundColor: '#0a0a0a',
+    titleBarStyle: 'hiddenInset',
+    frame: process.platform !== 'darwin',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+    },
+  })
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
+    mainWindow.webContents.openDevTools()
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+  }
+
+  mainWindow.on('closed', () => { mainWindow = null })
+}
+
+app.whenReady().then(() => {
+  // music:// → local file proxy with streaming support
+  protocol.handle('music', (request) => {
+    const rawPath = request.url.replace('music://localhost/', '')
+    const filePath = decodeURIComponent(rawPath)
+    return net.fetch(pathToFileURL(filePath).toString())
+  })
+
+  libraryStore.init(path.join(app.getPath('userData'), 'library'))
+  registerAllHandlers()
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+// Security: block all navigation and new window requests
+app.on('web-contents-created', (_, contents) => {
+  contents.on('will-navigate', (event) => {
+    event.preventDefault()
+  })
+  contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+})

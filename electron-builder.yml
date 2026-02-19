@@ -1,0 +1,45 @@
+appId: com.jocoding.music
+productName: Jocoding Music
+copyright: Copyright © 2025 Jocoding
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - "!**/*.map"
+
+asarUnpack:
+  - "node_modules/better-sqlite3/build/Release/*.node"
+  - "node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  category: public.app-category.music
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Audio
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+publish: null
