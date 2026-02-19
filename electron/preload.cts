@@ -60,5 +60,17 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.on('import:enriched', handler)
       return () => ipcRenderer.off('import:enriched', handler)
     },
+    onImportError: (cb: (data: { trackId: string; message: string }) => void) => {
+      const handler = (_: unknown, d: { trackId: string; message: string }) => cb(d)
+      ipcRenderer.on('import:error', handler)
+      return () => ipcRenderer.off('import:error', handler)
+    },
+  },
+
+  settings: {
+    getApiKey: () =>
+      ipcRenderer.invoke('settings:get-api-key'),
+    setApiKey: (key: string) =>
+      ipcRenderer.invoke('settings:set-api-key', key),
   },
 })

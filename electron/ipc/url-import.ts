@@ -1,8 +1,9 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import fs from 'fs'
+import path from 'path'
 import { parseFile } from 'music-metadata'
 import { libraryStore, type TrackMeta } from '../lib/library-store'
-import { downloadAudio } from '../lib/url-importer'
+import { downloadAudio, downloadThumbnail } from '../lib/url-importer'
 import { enrichMusicMetadata } from '../lib/music-agent'
 
 export function registerUrlImportHandlers(): void {
@@ -30,12 +31,26 @@ export function registerUrlImportHandlers(): void {
       title = meta.common.title ?? title
       artist = meta.common.artist ?? artist
       durationMs = meta.format.duration ? Math.round(meta.format.duration * 1000) : durationMs
-    } catch { /* keep yt-dlp metadata */ }
+    } catch (err) {
+      console.warn('[import] metadata parse fallback to yt-dlp:', err)
+    }
 
-    // 3. Get file size
+    // 3. Download thumbnail
+    let coverArtPath: string | null = null
+    if (imported.thumbnailUrl) {
+      const thumbPath = path.join(destDir, 'thumb.jpg')
+      try {
+        await downloadThumbnail(imported.thumbnailUrl, thumbPath)
+        coverArtPath = thumbPath
+      } catch (err) {
+        console.warn('[import] thumbnail download failed:', err)
+      }
+    }
+
+    // 4. Get file size
     const stat = fs.statSync(imported.filePath)
 
-    // 4. Upsert track into store
+    // 5. Upsert track into store
     const track: TrackMeta = {
       id,
       filePath: imported.filePath,
@@ -50,7 +65,7 @@ export function registerUrlImportHandlers(): void {
       sampleRate: null,
       fileSize: stat.size,
       mimeType: null,
-      coverArtPath: null,
+      coverArtPath,
       tags: [],
       isDeleted: false,
       sourceUrl: imported.sourceUrl,
@@ -79,6 +94,7 @@ export function registerUrlImportHandlers(): void {
       if (existing) {
         libraryStore.upsert({
           ...existing,
+          artistName: result.performingArtist ?? existing.artistName,
           originalArtist: result.originalArtist,
           isCover: result.isCover,
           platformLinks: result.platformLinks,
@@ -86,7 +102,13 @@ export function registerUrlImportHandlers(): void {
       }
 
       win?.webContents.send('import:enriched', { trackId: id, result })
-    }).catch(() => { /* enrichment failed silently */ })
+    }).catch((err) => {
+      console.error('[import] enrichment failed:', err)
+      win?.webContents.send('import:error', {
+        trackId: id,
+        message: `AI 분석 실패: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      })
+    })
 
     return {
       trackId: id,

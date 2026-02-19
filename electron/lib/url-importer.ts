@@ -18,6 +18,13 @@ export interface ImportResult {
   sourceUrl: string
 }
 
+export async function downloadThumbnail(url: string, destPath: string): Promise<void> {
+  const res = await fetch(url)
+  if (!res.ok) return
+  const buf = await res.arrayBuffer()
+  fs.writeFileSync(destPath, Buffer.from(buf))
+}
+
 export function detectPlatform(url: string): SourcePlatform {
   try {
     const u = new URL(url)
@@ -32,6 +39,14 @@ export function detectPlatform(url: string): SourcePlatform {
   }
 }
 
+function getYtDlpBinaryPath(): string | undefined {
+  if (process.resourcesPath) {
+    const bundled = path.join(process.resourcesPath, 'bin', 'yt-dlp')
+    if (fs.existsSync(bundled)) return bundled
+  }
+  return undefined
+}
+
 export async function downloadAudio(
   url: string,
   destDir: string,
@@ -43,7 +58,8 @@ export async function downloadAudio(
     fs.mkdirSync(destDir, { recursive: true })
   }
 
-  const ytDlp = new YTDlpWrap()
+  const binaryPath = getYtDlpBinaryPath()
+  const ytDlp = binaryPath ? new YTDlpWrap(binaryPath) : new YTDlpWrap()
 
   // First, get metadata via --dump-json (no download)
   const metaRaw = await ytDlp.execPromise([
@@ -104,5 +120,27 @@ export async function downloadAudio(
     thumbnailUrl,
     sourcePlatform: platform,
     sourceUrl: url,
+  }
+}
+
+export async function extractPlaylistUrls(url: string): Promise<string[]> {
+  const binaryPath = getYtDlpBinaryPath()
+  const ytDlp = binaryPath ? new YTDlpWrap(binaryPath) : new YTDlpWrap()
+
+  try {
+    const raw = await ytDlp.execPromise([
+      url,
+      '--flat-playlist',
+      '--dump-json',
+    ])
+    // Each line is a JSON object for one playlist entry
+    const entries = raw.trim().split('\n').filter(Boolean).map(line => {
+      const entry = JSON.parse(line) as { url?: string; webpage_url?: string; id?: string }
+      return entry.webpage_url ?? entry.url ?? (entry.id ? `https://www.youtube.com/watch?v=${entry.id}` : null)
+    }).filter((u): u is string => u !== null)
+    return entries
+  } catch {
+    // Not a playlist or extraction failed — treat as single URL
+    return [url]
   }
 }

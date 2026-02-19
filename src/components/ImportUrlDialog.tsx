@@ -41,6 +41,11 @@ export function ImportUrlDialog() {
     })
     unsubRef.current.push(unsubStatus)
 
+    const unsubEnriched = window.musicApp.system.onImportEnriched(async () => {
+      await loadTracks()
+    })
+    unsubRef.current.push(unsubEnriched)
+
     try {
       await window.musicApp.library.importUrl(url.trim())
       setStep('done')
