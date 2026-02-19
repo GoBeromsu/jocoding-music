@@ -51,6 +51,7 @@ export async function downloadAudio(
   url: string,
   destDir: string,
   onProgress?: (percent: number) => void,
+  quality: import('../lib/settings-store').DownloadQuality = 'best',
 ): Promise<ImportResult> {
   const platform = detectPlatform(url)
 
@@ -87,13 +88,14 @@ export async function downloadAudio(
 
   // Download best audio
   await new Promise<void>((resolve, reject) => {
+    const audioQuality = quality === 'best' ? '0' : quality === '192k' ? '192K' : '128K'
     const process = ytDlp.exec([
       url,
       '--no-playlist',
       '-f', 'bestaudio/best',
       '--extract-audio',
       '--audio-format', 'm4a',
-      '--audio-quality', '0',
+      '--audio-quality', audioQuality,
       '-o', outputTemplate,
     ])
 

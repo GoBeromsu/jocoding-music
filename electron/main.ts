@@ -3,6 +3,7 @@ import path from 'path'
 import { pathToFileURL } from 'url'
 import { config } from 'dotenv'
 import { libraryStore } from './lib/library-store'
+import { folderStore } from './lib/folder-store'
 import { settingsStore } from './lib/settings-store'
 import { registerAllHandlers } from './ipc/index'
 import { seedDemoIfNeeded } from './lib/demo-seeder'
@@ -77,6 +78,7 @@ app.whenReady().then(() => {
   seedDemoIfNeeded(libraryPath, demoLibraryPath)
 
   libraryStore.init(libraryPath)
+  folderStore.init(libraryPath)
 
   registerAllHandlers()
   createWindow()
