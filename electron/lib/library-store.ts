@@ -21,9 +21,8 @@ export interface TrackMeta {
   isDeleted: boolean
   sourceUrl: string | null
   sourcePlatform: string | null
-  originalArtist: string | null
-  isCover: boolean | null
-  platformLinks: { platform: string; url: string }[]
+  genre: string | null
+  mood: string | null
   playCount: number
   lastPlayedAt: number | null
   dateAdded: number
@@ -87,7 +86,9 @@ class LibraryStore {
     return this.getAll().filter(t =>
       t.title?.toLowerCase().includes(q) ||
       t.artistName?.toLowerCase().includes(q) ||
-      t.albumTitle?.toLowerCase().includes(q)
+      t.albumTitle?.toLowerCase().includes(q) ||
+      t.genre?.toLowerCase().includes(q) ||
+      t.mood?.toLowerCase().includes(q)
     )
   }
 
@@ -101,6 +102,77 @@ class LibraryStore {
 
   newId(): string {
     return Date.now().toString(36).toUpperCase() + crypto.randomBytes(3).toString('hex').toUpperCase()
+  }
+
+  getDashboardStats() {
+    const tracks = this.getAll()
+
+    const totalPlayCount = tracks.reduce((s, t) => s + t.playCount, 0)
+    const totalPlayMs = tracks.reduce((sum, t) => {
+      if (!t.durationMs || !t.playCount) return sum
+      return sum + t.durationMs * t.playCount
+    }, 0)
+    const taggedTracks = tracks.filter(t => t.genre).length
+
+    // Genre — both track count and play-count weighted
+    const genreMap = new Map<string, { trackCount: number; playCount: number }>()
+    for (const t of tracks) {
+      if (!t.genre) continue
+      const cur = genreMap.get(t.genre) ?? { trackCount: 0, playCount: 0 }
+      genreMap.set(t.genre, { trackCount: cur.trackCount + 1, playCount: cur.playCount + t.playCount })
+    }
+    // Sort by play count first, then track count as tiebreaker
+    const topGenres = Array.from(genreMap.entries())
+      .map(([genre, v]) => ({ genre, ...v }))
+      .sort((a, b) => b.playCount - a.playCount || b.trackCount - a.trackCount)
+      .slice(0, 6)
+
+    // Mood — same
+    const moodMap = new Map<string, { trackCount: number; playCount: number }>()
+    for (const t of tracks) {
+      if (!t.mood) continue
+      const cur = moodMap.get(t.mood) ?? { trackCount: 0, playCount: 0 }
+      moodMap.set(t.mood, { trackCount: cur.trackCount + 1, playCount: cur.playCount + t.playCount })
+    }
+    const topMoods = Array.from(moodMap.entries())
+      .map(([mood, v]) => ({ mood, ...v }))
+      .sort((a, b) => b.playCount - a.playCount || b.trackCount - a.trackCount)
+      .slice(0, 6)
+
+    const toStats = (t: TrackMeta) => ({
+      id: t.id,
+      title: t.title,
+      artistName: t.artistName,
+      genre: t.genre,
+      mood: t.mood,
+      playCount: t.playCount,
+      dateAdded: t.dateAdded,
+      coverArtPath: t.coverArtPath,
+    })
+
+    // Top played tracks
+    const topTracks = tracks
+      .filter(t => t.playCount > 0)
+      .sort((a, b) => b.playCount - a.playCount)
+      .slice(0, 5)
+      .map(toStats)
+
+    // Recent additions
+    const recentTracks = tracks
+      .sort((a, b) => b.dateAdded - a.dateAdded)
+      .slice(0, 5)
+      .map(toStats)
+
+    return {
+      totalTracks: tracks.length,
+      taggedTracks,
+      totalPlayCount,
+      totalPlayMs,
+      topGenres,
+      topMoods,
+      topTracks,
+      recentTracks,
+    }
   }
 }
 
