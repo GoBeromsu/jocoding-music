@@ -5,6 +5,7 @@ import { config } from 'dotenv'
 import { libraryStore } from './lib/library-store'
 import { settingsStore } from './lib/settings-store'
 import { registerAllHandlers } from './ipc/index'
+import { seedDemoIfNeeded } from './lib/demo-seeder'
 
 // Load .env from project root (dev) or resources dir (packaged)
 config({ path: app.isPackaged
@@ -68,7 +69,15 @@ app.whenReady().then(() => {
   const savedKey = settingsStore.get().openaiApiKey
   if (savedKey) process.env.OPENAI_API_KEY = savedKey
 
-  libraryStore.init(path.join(app.getPath('userData'), 'library'))
+  const libraryPath = path.join(app.getPath('userData'), 'library')
+
+  const demoLibraryPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'demo-library')
+    : path.join(__dirname, '..', 'resources', 'demo-library')
+  seedDemoIfNeeded(libraryPath, demoLibraryPath)
+
+  libraryStore.init(libraryPath)
+
   registerAllHandlers()
   createWindow()
 

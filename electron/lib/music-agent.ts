@@ -51,6 +51,38 @@ Valid moods: ${MOODS.join(', ')}
 
 Pick the single best-matching genre and mood. If unsure, pick the closest match from the lists.`
 
+async function classifyWithWebSearch(client: OpenAI, systemPrompt: string, userPrompt: string): Promise<string> {
+  const response = await client.responses.create({
+    model: 'gpt-4o-mini',
+    tools: [{ type: 'web_search_preview' as const }],
+    input: [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: userPrompt },
+    ],
+  })
+  return response.output
+    .filter((item) => item.type === 'message')
+    .flatMap((item) => {
+      if (item.type !== 'message') return []
+      return item.content
+        .filter((c) => c.type === 'output_text' && 'text' in c)
+        .map((c) => ('text' in c ? (c.text as string) : ''))
+    })
+    .join('')
+}
+
+async function classifyWithChatCompletion(client: OpenAI, systemPrompt: string, userPrompt: string): Promise<string> {
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    response_format: { type: 'json_object' },
+  })
+  return response.choices[0]?.message?.content ?? ''
+}
+
 export async function enrichMusicMetadata(input: AgentInput): Promise<AgentResult> {
   const apiKey = settingsStore.get().openaiApiKey || process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -65,24 +97,13 @@ Source URL: ${input.sourceUrl}
 
 Classify the genre and mood of this song.`
 
-  const response = await client.responses.create({
-    model: 'gpt-4o-mini',
-    tools: [{ type: 'web_search_preview' as const }],
-    input: [
-      { role: 'system' as const, content: SYSTEM_PROMPT },
-      { role: 'user' as const, content: userPrompt },
-    ],
-  })
-
-  const outputText = response.output
-    .filter((item) => item.type === 'message')
-    .flatMap((item) => {
-      if (item.type !== 'message') return []
-      return item.content
-        .filter((c) => c.type === 'output_text' && 'text' in c)
-        .map((c) => ('text' in c ? (c.text as string) : ''))
-    })
-    .join('')
+  let outputText = ''
+  try {
+    outputText = await classifyWithWebSearch(client, SYSTEM_PROMPT, userPrompt)
+  } catch {
+    // web_search_preview unavailable for this account — fall back to Chat Completions
+    outputText = await classifyWithChatCompletion(client, SYSTEM_PROMPT, userPrompt)
+  }
 
   try {
     const parsed = JSON.parse(outputText.trim()) as AgentResult

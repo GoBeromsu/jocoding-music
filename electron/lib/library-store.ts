@@ -6,6 +6,7 @@ export interface TrackMeta {
   id: string
   filePath: string
   isImported: boolean
+  isFavorite: boolean
   title: string | null
   artistName: string | null
   albumTitle: string | null
@@ -81,6 +82,11 @@ class LibraryStore {
     }
   }
 
+  update(id: string, patch: Partial<Pick<TrackMeta, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>): void {
+    const track = this.cache.get(id)
+    if (track) this.upsert({ ...track, ...patch })
+  }
+
   search(query: string): TrackMeta[] {
     const q = query.toLowerCase()
     return this.getAll().filter(t =>
@@ -107,36 +113,28 @@ class LibraryStore {
   getDashboardStats() {
     const tracks = this.getAll()
 
-    const totalPlayCount = tracks.reduce((s, t) => s + t.playCount, 0)
-    const totalPlayMs = tracks.reduce((sum, t) => {
-      if (!t.durationMs || !t.playCount) return sum
-      return sum + t.durationMs * t.playCount
-    }, 0)
     const taggedTracks = tracks.filter(t => t.genre).length
 
-    // Genre — both track count and play-count weighted
-    const genreMap = new Map<string, { trackCount: number; playCount: number }>()
+    // Genre — track count only, sorted by track count
+    const genreMap = new Map<string, number>()
     for (const t of tracks) {
       if (!t.genre) continue
-      const cur = genreMap.get(t.genre) ?? { trackCount: 0, playCount: 0 }
-      genreMap.set(t.genre, { trackCount: cur.trackCount + 1, playCount: cur.playCount + t.playCount })
+      genreMap.set(t.genre, (genreMap.get(t.genre) ?? 0) + 1)
     }
-    // Sort by play count first, then track count as tiebreaker
     const topGenres = Array.from(genreMap.entries())
-      .map(([genre, v]) => ({ genre, ...v }))
-      .sort((a, b) => b.playCount - a.playCount || b.trackCount - a.trackCount)
+      .map(([genre, trackCount]) => ({ genre, trackCount }))
+      .sort((a, b) => b.trackCount - a.trackCount)
       .slice(0, 6)
 
     // Mood — same
-    const moodMap = new Map<string, { trackCount: number; playCount: number }>()
+    const moodMap = new Map<string, number>()
     for (const t of tracks) {
       if (!t.mood) continue
-      const cur = moodMap.get(t.mood) ?? { trackCount: 0, playCount: 0 }
-      moodMap.set(t.mood, { trackCount: cur.trackCount + 1, playCount: cur.playCount + t.playCount })
+      moodMap.set(t.mood, (moodMap.get(t.mood) ?? 0) + 1)
     }
     const topMoods = Array.from(moodMap.entries())
-      .map(([mood, v]) => ({ mood, ...v }))
-      .sort((a, b) => b.playCount - a.playCount || b.trackCount - a.trackCount)
+      .map(([mood, trackCount]) => ({ mood, trackCount }))
+      .sort((a, b) => b.trackCount - a.trackCount)
       .slice(0, 6)
 
     const toStats = (t: TrackMeta) => ({
@@ -166,8 +164,6 @@ class LibraryStore {
     return {
       totalTracks: tracks.length,
       taggedTracks,
-      totalPlayCount,
-      totalPlayMs,
       topGenres,
       topMoods,
       topTracks,

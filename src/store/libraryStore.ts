@@ -14,6 +14,8 @@ interface LibraryState {
   loadTracks: () => Promise<void>
   search: (query: string) => Promise<void>
   refreshTrack: (trackId: string) => Promise<void>
+  updateTrack: (id: string, patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>) => Promise<void>
+  deleteTrack: (id: string) => Promise<void>
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
@@ -35,6 +37,23 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (!updated) return
     set((state) => ({
       tracks: state.tracks.map(t => t.id === trackId ? updated : t),
+    }))
+  },
+
+  updateTrack: async (id, patch) => {
+    // Optimistic update
+    set((state) => ({
+      tracks: state.tracks.map(t => t.id === id ? { ...t, ...patch } : t),
+      searchResults: state.searchResults.map(t => t.id === id ? { ...t, ...patch } : t),
+    }))
+    await window.musicApp.library.updateTrack(id, patch)
+  },
+
+  deleteTrack: async (id) => {
+    await window.musicApp.library.deleteTrack(id)
+    set((state) => ({
+      tracks: state.tracks.filter(t => t.id !== id),
+      searchResults: state.searchResults.filter(t => t.id !== id),
     }))
   },
 

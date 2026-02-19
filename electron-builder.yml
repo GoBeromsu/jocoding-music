@@ -1,5 +1,5 @@
 appId: com.jocoding.music
-productName: Jocoding Music
+productName: 음감
 copyright: Copyright © 2025 Jocoding
 
 directories:
@@ -14,6 +14,8 @@ files:
 extraResources:
   - from: build/bin/yt-dlp
     to: bin/yt-dlp
+  - from: resources/demo-library
+    to: demo-library
 
 mac:
   target:

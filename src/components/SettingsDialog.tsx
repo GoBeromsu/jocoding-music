@@ -33,10 +33,10 @@ export function SettingsDialog() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-neutral-500 hover:bg-neutral-800 hover:text-white transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-neutral-500 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
       >
         <Settings size={15} />
-        Settings
+        설정
       </button>
 
       {open && (
@@ -50,7 +50,7 @@ export function SettingsDialog() {
             className="relative bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl w-80 p-5"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-sm font-semibold text-neutral-100 mb-4">Settings</h2>
+            <h2 className="text-sm font-semibold text-neutral-100 mb-4">설정</h2>
 
             {/* Credits */}
             <div className="mb-5 px-3 py-2.5 bg-neutral-800 rounded-lg flex items-center justify-between">
@@ -59,7 +59,7 @@ export function SettingsDialog() {
                 <span className="text-xs text-neutral-300">AI Credits</span>
               </div>
               <div className="text-right">
-                <span className="text-sm font-semibold text-white">
+                <span className="text-sm font-semibold text-neutral-100">
                   {credits ?? '—'}
                 </span>
                 <span className="text-[10px] text-neutral-500 ml-1">remaining</span>
@@ -79,7 +79,7 @@ export function SettingsDialog() {
                     onClick={() => setTheme(opt.value)}
                     className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-lg border text-xs transition-colors ${
                       preference === opt.value
-                        ? 'border-white text-white bg-neutral-700'
+                        ? 'border-neutral-100 text-neutral-100 bg-neutral-700'
                         : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200'
                     }`}
                   >
@@ -100,7 +100,7 @@ export function SettingsDialog() {
                   onChange={e => setApiKey(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSave()}
                   placeholder="sk-..."
-                  className="flex-1 bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-xs text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
+                  className="input-base flex-1"
                 />
                 <button
                   onClick={() => setShowKey(v => !v)}
@@ -118,13 +118,13 @@ export function SettingsDialog() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={handleSave}
-                className="px-4 py-1.5 text-xs bg-neutral-600 hover:bg-neutral-500 text-white rounded-md transition-colors"
+                className="btn-secondary"
               >
                 {saved ? '저장됨!' : '저장'}
               </button>
               <button
                 onClick={() => setOpen(false)}
-                className="px-4 py-1.5 text-xs bg-neutral-700 hover:bg-neutral-600 text-neutral-100 rounded-md transition-colors"
+                className="btn-ghost"
               >
                 닫기
               </button>

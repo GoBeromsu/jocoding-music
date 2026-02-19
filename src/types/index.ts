@@ -2,6 +2,7 @@ export interface Track {
   id: string
   filePath: string
   isImported: boolean
+  isFavorite: boolean
   title: string | null
   artistName: string | null
   albumTitle: string | null
@@ -48,10 +49,8 @@ export interface TrackStats {
 export interface DashboardStats {
   totalTracks: number
   taggedTracks: number
-  totalPlayCount: number
-  totalPlayMs: number
-  topGenres: { genre: string; trackCount: number; playCount: number }[]
-  topMoods: { mood: string; trackCount: number; playCount: number }[]
+  topGenres: { genre: string; trackCount: number }[]
+  topMoods: { mood: string; trackCount: number }[]
   topTracks: TrackStats[]
   recentTracks: TrackStats[]
 }
@@ -64,6 +63,7 @@ declare global {
         getTrack: (id: string) => Promise<Track | null>
         searchTracks: (query: string) => Promise<Track[]>
         deleteTrack: (id: string) => Promise<void>
+        updateTrack: (id: string, patch: Partial<Pick<Track, 'title' | 'artistName' | 'albumTitle' | 'isFavorite'>>) => Promise<void>
         importUrl: (url: string) => Promise<ImportUrlResult>
         importPlaylist: (url: string) => Promise<{ trackIds: string[]; count: number }>
       }
@@ -94,6 +94,14 @@ declare global {
       dashboard: {
         getStats: () => Promise<DashboardStats>
         generateTasteSummary: () => Promise<string>
+      }
+      dev: {
+        backfillTags: () => Promise<{
+          total: number
+          succeeded: number
+          failed: number
+          results: { id: string; success: boolean; error?: string }[]
+        }>
       }
     }
   }

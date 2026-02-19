@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.invoke('library:search-tracks', query),
     deleteTrack: (id: string) =>
       ipcRenderer.invoke('library:delete-track', id),
+    updateTrack: (id: string, patch: object) =>
+      ipcRenderer.invoke('library:update-track', id, patch),
     importUrl: (url: string) =>
       ipcRenderer.invoke('track:import-url', url),
     importPlaylist: (url: string) =>
@@ -64,5 +66,10 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.invoke('dashboard:get-stats'),
     generateTasteSummary: () =>
       ipcRenderer.invoke('dashboard:generate-taste-summary'),
+  },
+
+  dev: {
+    backfillTags: () =>
+      ipcRenderer.invoke('dev:backfill-tags'),
   },
 })

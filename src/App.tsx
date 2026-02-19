@@ -22,7 +22,7 @@ export default function App() {
       </div>
 
       <PlayerBar />
-      <Toaster position="bottom-right" toastOptions={{ style: { background: '#262626', color: '#e5e5e5', fontSize: '13px', borderRadius: '8px' }, duration: 4000 }} />
+      <Toaster position="bottom-right" toastOptions={{ style: { background: resolved === 'light' ? '#f0f0f0' : '#262626', color: resolved === 'light' ? '#171717' : '#e5e5e5', fontSize: '13px', borderRadius: '8px' }, duration: 4000 }} />
     </div>
   )
 }

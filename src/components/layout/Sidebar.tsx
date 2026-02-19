@@ -5,8 +5,8 @@ import { ImportUrlDialog } from '@/components/ImportUrlDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
-  { id: 'tracks',    label: 'Songs',    icon: <Music2    size={16} /> },
-  { id: 'dashboard', label: 'My Taste', icon: <BarChart2 size={16} /> },
+  { id: 'tracks',    label: '내 음악',    icon: <Music2    size={16} /> },
+  { id: 'dashboard', label: '취향', icon: <BarChart2 size={16} /> },
 ]
 
 export function Sidebar() {
@@ -15,9 +15,9 @@ export function Sidebar() {
   return (
     <aside className="w-52 flex-shrink-0 bg-neutral-900 border-r border-neutral-800 flex flex-col py-4">
       <div className="px-4 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-base">🎵</span>
-          <span className="text-sm font-semibold text-neutral-200 tracking-tight">SoundOwn</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-base font-bold text-neutral-100 tracking-tight leading-none">음감</span>
+          <span className="text-[10px] text-neutral-500 tracking-widest leading-none">音感</span>
         </div>
       </div>
 
@@ -29,8 +29,8 @@ export function Sidebar() {
             className={cn(
               'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
               activeView === item.id
-                ? 'bg-neutral-700 text-white'
-                : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                ? 'bg-neutral-700 text-neutral-100'
+                : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'
             )}
           >
             {item.icon}
