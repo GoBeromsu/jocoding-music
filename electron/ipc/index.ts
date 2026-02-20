@@ -5,6 +5,7 @@ import { registerSettingsHandlers } from './settings'
 import { registerDashboardHandlers } from './dashboard'
 import { registerDevHandlers } from './dev'
 import { registerFolderHandlers } from './folders'
+import { registerObsidianHandlers } from './obsidian'
 
 export function registerAllHandlers(): void {
   registerLibraryHandlers()
@@ -14,4 +15,5 @@ export function registerAllHandlers(): void {
   registerDashboardHandlers()
   registerDevHandlers()
   registerFolderHandlers()
+  registerObsidianHandlers()
 }

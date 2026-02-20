@@ -31,10 +31,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setTrack: (track, queue) => {
     const q = queue ?? get().queue
+    const nextIndex = q.findIndex(t => t.id === track.id)
     set({
       currentTrack: track,
       queue: q,
-      queueIndex: q.findIndex(t => t.id === track.id),
+      queueIndex: nextIndex >= 0 ? nextIndex : 0,
       isPlaying: true,
       currentTime: 0,
     })

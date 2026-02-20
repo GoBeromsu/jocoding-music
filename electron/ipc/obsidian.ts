@@ -33,7 +33,15 @@ tags: [music]
 `
       fs.writeFileSync(notePath, frontmatter + content, 'utf-8')
 
-      return { trackId, notePath, vaultPath, createdAt: Date.now(), updatedAt: Date.now() }
+      return {
+        trackId,
+        path: notePath,
+        notePath,
+        title: track.title ?? 'Untitled',
+        vaultPath,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
     }
   )
 

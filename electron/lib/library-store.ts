@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import type { ImportStatus } from '../../src/types/index'
 
 export interface TrackMeta {
   id: string
@@ -20,6 +21,8 @@ export interface TrackMeta {
   coverArtPath: string | null
   tags: string[]
   hasAudio: boolean
+  importStatus?: ImportStatus
+  importError?: string | null
   externalLinks: string | null
   isDeleted: boolean
   sourceUrl: string | null
@@ -54,6 +57,9 @@ class LibraryStore {
           const metaFile = path.join(this.tracksPath, entry.name, 'metadata.json')
           try {
             const data = JSON.parse(fs.readFileSync(metaFile, 'utf-8')) as TrackMeta
+            if (typeof data.hasAudio !== 'boolean') {
+              data.hasAudio = true
+            }
             this.cache.set(data.id, data)
           } catch { /* skip corrupt */ }
         }

@@ -28,8 +28,8 @@ contextBridge.exposeInMainWorld('musicApp', {
   },
 
   system: {
-    onImportStatus: (cb: (status: { step: string; percent: number; trackId?: string }) => void) => {
-      const handler = (_: unknown, s: { step: string; percent: number; trackId?: string }) => cb(s)
+    onImportStatus: (cb: (status: { trackId?: string; step: 'metadata' | 'downloading' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'; phase?: 'metadata' | 'downloading' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'; percent: number; hasAudio?: boolean; message?: string }) => void) => {
+      const handler = (_: unknown, s: { trackId?: string; step: 'metadata' | 'downloading' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'; phase?: 'metadata' | 'downloading' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'; percent: number; hasAudio?: boolean; message?: string }) => cb(s)
       ipcRenderer.on('import:status', handler)
       return () => ipcRenderer.off('import:status', handler)
     },
@@ -48,6 +48,17 @@ contextBridge.exposeInMainWorld('musicApp', {
       ipcRenderer.on('settings:api-key-updated', handler)
       return () => ipcRenderer.off('settings:api-key-updated', handler)
     },
+  },
+
+  obsidian: {
+    selectVault: () =>
+      ipcRenderer.invoke('obsidian:select-vault'),
+    createNote: (trackId: string, vaultPath: string, content: string) =>
+      ipcRenderer.invoke('obsidian:create-note', trackId, vaultPath, content),
+    getNotesByTrack: (trackId: string) =>
+      ipcRenderer.invoke('obsidian:get-notes-by-track', trackId),
+    openNote: (notePath: string) =>
+      ipcRenderer.invoke('obsidian:open-note', notePath),
   },
 
   settings: {

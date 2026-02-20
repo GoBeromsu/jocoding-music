@@ -9,7 +9,7 @@ export default function App() {
   const { resolved } = useThemeStore()
   useIpcToasts()
   return (
-    <div className={`flex flex-col h-screen bg-neutral-950 text-neutral-100 overflow-hidden select-none${resolved === 'light' ? ' light' : ''}`}>
+    <div className={`flex flex-col h-screen bg-surface text-on-surface overflow-hidden select-none${resolved === 'light' ? ' light' : ''}`}>
       {/* macOS traffic light drag region */}
       <div
         className="flex-shrink-0 h-8 w-full"
@@ -22,7 +22,7 @@ export default function App() {
       </div>
 
       <PlayerBar />
-      <Toaster position="bottom-right" toastOptions={{ style: { background: resolved === 'light' ? '#f0f0f0' : '#262626', color: resolved === 'light' ? '#171717' : '#e5e5e5', fontSize: '13px', borderRadius: '8px' }, duration: 4000 }} />
+      <Toaster position="bottom-right" toastOptions={{ style: { background: 'var(--color-inverse-surface)', color: 'var(--color-inverse-on-surface)', fontSize: '13px', borderRadius: '8px' }, duration: 4000 }} />
     </div>
   )
 }

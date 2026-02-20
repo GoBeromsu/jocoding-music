@@ -18,7 +18,13 @@ interface ThemeState {
   setTheme: (pref: ThemePreference) => void
 }
 
-const savedPref = (localStorage.getItem('theme-preference') as ThemePreference) ?? 'light'
+function loadPreference(): ThemePreference {
+  const value = localStorage.getItem('theme-preference')
+  if (value === 'system' || value === 'dark' || value === 'light') return value
+  return 'system'
+}
+
+const savedPref = loadPreference()
 
 export const useThemeStore = create<ThemeState>((set) => {
   // Listen for OS theme changes to update resolved when preference is 'system'

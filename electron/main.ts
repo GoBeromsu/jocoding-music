@@ -27,17 +27,39 @@ protocol.registerSchemesAsPrivileged([
   },
 ])
 
+// Single instance lock — prevent multiple app windows
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+  process.exit(0)
+}
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+    return
+  }
+  createWindow()
+})
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
+
+  const devIconPath = app.isPackaged ? null : path.join(__dirname, '../build/icon.png')
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0d1117',
     titleBarStyle: 'hiddenInset',
     frame: process.platform !== 'darwin',
+    ...(devIconPath ? { icon: devIconPath } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -56,6 +78,8 @@ function createWindow() {
   }
 
   mainWindow.on('closed', () => { mainWindow = null })
+
+  return mainWindow
 }
 
 app.whenReady().then(() => {

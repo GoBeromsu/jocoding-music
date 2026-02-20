@@ -2,28 +2,77 @@
 
 /* ── Design Tokens ─────────────────────────────────────── */
 @theme {
-  /* Warm-tinted dark palette */
-  --color-neutral-950: oklch(7% 0.004 60);
-  --color-neutral-900: oklch(10.5% 0.005 60);
-  --color-neutral-800: oklch(15.5% 0.006 60);
-  --color-neutral-700: oklch(22% 0.006 60);
-  --color-neutral-600: oklch(34% 0.004 60);
-  --color-neutral-500: oklch(47% 0.003 60);
-  --color-neutral-400: oklch(62% 0.003 60);
-  --color-neutral-300: oklch(76% 0.003 60);
-  --color-neutral-200: oklch(86% 0.003 60);
-  --color-neutral-100: oklch(94% 0.004 70);
-  --color-white: oklch(99% 0.003 70);
+  --app-bg: #0d1117;
+  --app-surface: #161b22;
+  --app-surface-subtle: #21262d;
+  --app-surface-hover: #30363d;
+  --app-border: #30363d;
+  --app-text: #c9d1d9;
+  --app-muted: #8b949e;
+  --app-accent: #58a6ff;
+  --app-accent-strong: #2f81f7;
+  --app-accent-weak: #79c0ff;
+  --app-error: #f85149;
+  --app-success: #2ea043;
 
-  /* Amber accent — warm analog glow */
-  --color-amber-500: oklch(75% 0.145 68);
-  --color-amber-400: oklch(82% 0.14 70);
-  --color-amber-300: oklch(88% 0.12 72);
-  --color-amber-600: oklch(66% 0.15 64);
+  --color-neutral-950: #0d1117;
+  --color-neutral-900: #161b22;
+  --color-neutral-800: #21262d;
+  --color-neutral-700: #30363d;
+  --color-neutral-600: #484f58;
+  --color-neutral-500: #6e7681;
+  --color-neutral-400: #8b949e;
+  --color-neutral-300: #b1bac4;
+  --color-neutral-200: #c9d1d9;
+  --color-neutral-100: #f0f6fc;
+  --color-white: #ffffff;
 
-  /* Rose for mood */
-  --color-rose-400: oklch(70% 0.18 15);
-  --color-rose-500: oklch(62% 0.20 15);
+  --color-amber-500: #58a6ff;
+  --color-amber-400: #79b9ff;
+  --color-amber-300: #a1cdff;
+  --color-amber-600: #2f81f7;
+
+  --color-rose-400: #a5a5f6;
+  --color-rose-500: #8b5fd2;
+
+  --color-primary: var(--app-accent-strong);
+  --color-on-primary: #ffffff;
+  --color-primary-container: color-mix(in oklch, var(--app-accent-strong) 15%, var(--app-surface-subtle));
+  --color-on-primary-container: #f0f6fc;
+
+  --color-secondary: #58a6ff;
+  --color-on-secondary: #0d1117;
+  --color-secondary-container: #1f6feb33;
+  --color-on-secondary-container: #b6e3ff;
+
+  --color-tertiary: #8b949e;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #30363d;
+  --color-on-tertiary-container: #f0f6fc;
+
+  --color-error: #f85149;
+  --color-on-error: #ffffff;
+  --color-error-container: #f8514930;
+  --color-on-error-container: #ffdcd9;
+
+  --color-surface: var(--app-bg);
+  --color-surface-dim: #010409;
+  --color-surface-bright: var(--app-surface);
+  --color-surface-container-lowest: #0d1117;
+  --color-surface-container-low: var(--app-surface);
+  --color-surface-container: var(--app-surface-subtle);
+  --color-surface-container-high: var(--app-surface-hover);
+  --color-surface-container-highest: #30363d;
+
+  --color-on-surface: var(--app-text);
+  --color-on-surface-variant: var(--app-muted);
+
+  --color-outline: var(--app-border);
+  --color-outline-variant: #21262d;
+
+  --color-inverse-surface: var(--app-surface);
+  --color-inverse-on-surface: var(--app-bg);
+  --color-inverse-primary: var(--app-accent);
 
   /* Typography */
   --font-display: 'DM Serif Display', Georgia, serif;
@@ -37,18 +86,88 @@
 
 /* Light theme overrides */
 .light {
-  --color-neutral-950: oklch(98% 0.002 80);
-  --color-neutral-900: oklch(95% 0.003 80);
-  --color-neutral-800: oklch(90% 0.003 80);
-  --color-neutral-700: oklch(81% 0.003 70);
-  --color-neutral-600: oklch(64% 0.004 60);
-  --color-neutral-500: oklch(50% 0.003 60);
-  --color-neutral-400: oklch(38% 0.003 60);
-  --color-neutral-300: oklch(25% 0.003 60);
-  --color-neutral-200: oklch(16% 0.004 60);
-  --color-neutral-100: oklch(8% 0.005 60);
-  --color-white: oklch(4% 0.004 60);
+  --app-bg: #ffffff;
+  --app-surface: #f6f8fa;
+  --app-surface-subtle: #f0f3f6;
+  --app-surface-hover: #e5ebf1;
+  --app-border: #d0d7de;
+  --app-text: #24292f;
+  --app-muted: #656d76;
+  --app-accent: #0969da;
+  --app-accent-strong: #0550ae;
+  --app-accent-weak: #218bff;
+  --app-error: #cf222e;
+  --app-success: #2da44e;
+
+  --color-neutral-950: #ffffff;
+  --color-neutral-900: #f6f8fa;
+  --color-neutral-800: #f0f3f6;
+  --color-neutral-700: #d0d7de;
+  --color-neutral-600: #afb8c1;
+  --color-neutral-500: #8c959f;
+  --color-neutral-400: #656d76;
+  --color-neutral-300: #57606a;
+  --color-neutral-200: #424a53;
+  --color-neutral-100: #24292f;
+  --color-white: #0d1117;
+
+  --color-amber-500: #0969da;
+  --color-amber-400: #2f81f7;
+  --color-amber-300: #54aeff;
+  --color-amber-600: #0550ae;
+
+  --color-rose-400: #d55db9;
+  --color-rose-500: #a371f7;
+
+  --color-primary: #0969da;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ddf4ff;
+  --color-on-primary-container: #0550ae;
+
+  --color-secondary: #1f6feb;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e2ecf9;
+  --color-on-secondary-container: #0a3069;
+
+  --color-tertiary: #57606a;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #afb8c1;
+  --color-on-tertiary-container: #24292f;
+
+  --color-error: #cf222e;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffd8d3;
+  --color-on-error-container: #5a1d14;
+
+  --color-surface: #ffffff;
+  --color-surface-dim: #f6f8fa;
+  --color-surface-bright: #f9fbfd;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f8fa;
+  --color-surface-container: #f0f3f6;
+  --color-surface-container-high: #dde7f0;
+  --color-surface-container-highest: #c9d1d9;
+
+  --color-on-surface: #24292f;
+  --color-on-surface-variant: #57606a;
+
+  --color-outline: #d0d7de;
+  --color-outline-variant: #d8dee4;
+
+  --color-inverse-surface: #1f2937;
+  --color-inverse-on-surface: #f0f6fc;
+  --color-inverse-primary: #58a6ff;
+
 }
+
+.app-bg { background: var(--app-bg); }
+.app-surface { background: var(--app-surface); }
+.app-surface-subtle { background: var(--app-surface-subtle); }
+.app-surface-hover:hover { background: var(--app-surface-hover); }
+.app-border { border-color: var(--app-border); }
+.app-text { color: var(--app-text); }
+.app-muted { color: var(--app-muted); }
+.app-accent { color: var(--app-accent); }
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -62,8 +181,8 @@ html, body, #root {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-neutral-950);
-  color: var(--color-neutral-100);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
@@ -73,10 +192,10 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neutral-700);
+  background: var(--color-outline-variant);
   border-radius: 2px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-600); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
 
 /* Range input — custom track */
 input[type="range"] {
@@ -86,7 +205,7 @@ input[type="range"] {
   cursor: pointer;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  background: var(--color-neutral-700);
+  background: var(--color-on-surface-variant);
   border-radius: 2px;
   height: 3px;
 }
@@ -96,12 +215,12 @@ input[type="range"]::-webkit-slider-thumb {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--color-neutral-100);
+  background: var(--color-on-surface);
   margin-top: -3.5px;
   transition: background 0.15s, transform 0.15s;
 }
 input[type="range"]:hover::-webkit-slider-thumb {
-  background: var(--color-amber-400);
+  background: var(--color-primary);
   transform: scale(1.2);
 }
 
@@ -110,8 +229,8 @@ input[type="range"]:hover::-webkit-slider-thumb {
   .btn-primary {
     @apply px-4 py-1.5 text-sm font-medium rounded-lg transition-all duration-150
            disabled:opacity-40 disabled:cursor-not-allowed;
-    background: var(--color-neutral-100);
-    color: var(--color-neutral-950);
+    background: var(--color-on-surface);
+    color: var(--color-surface);
   }
   .btn-primary:not(:disabled):hover {
     background: var(--color-white);
@@ -122,57 +241,57 @@ input[type="range"]:hover::-webkit-slider-thumb {
   .btn-secondary {
     @apply px-3 py-1.5 text-xs rounded-lg transition-all duration-150
            disabled:opacity-40 disabled:cursor-not-allowed;
-    background: var(--color-neutral-800);
-    color: var(--color-neutral-300);
-    border: 1px solid var(--color-neutral-700);
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface-variant);
+    border: 1px solid var(--color-outline-variant);
   }
   .btn-secondary:not(:disabled):hover {
-    background: var(--color-neutral-700);
-    color: var(--color-neutral-100);
+    background: var(--color-outline-variant);
+    color: var(--color-on-surface);
   }
 
   .btn-ghost {
     @apply px-3 py-1.5 text-xs transition-colors duration-150;
-    color: var(--color-neutral-500);
+    color: var(--color-outline);
   }
   .btn-ghost:hover {
-    color: var(--color-neutral-300);
+    color: var(--color-on-surface-variant);
   }
 
   /* ── Input ────────────────────────────────────────────── */
   .input-base {
     @apply w-full px-3 py-2 rounded-lg text-sm transition-all duration-150
            disabled:opacity-50;
-    background: var(--color-neutral-800);
-    border: 1px solid var(--color-neutral-700);
-    color: var(--color-neutral-100);
+    background: var(--color-surface-container-high);
+    border: 1px solid var(--color-outline-variant);
+    color: var(--color-on-surface);
     font-family: var(--font-sans);
   }
-  .input-base::placeholder { color: var(--color-neutral-500); }
+  .input-base::placeholder { color: var(--color-outline); }
   .input-base:focus {
     outline: none;
-    border-color: var(--color-neutral-500);
-    box-shadow: 0 0 0 2px oklch(47% 0.003 60 / 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-primary) 20%, transparent);
   }
 
   /* ── Pills ────────────────────────────────────────────── */
   .pill-genre {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium;
-    background: oklch(75% 0.145 68 / 0.15);
-    color: var(--color-amber-400);
-    border: 1px solid oklch(75% 0.145 68 / 0.25);
+    background: color-mix(in oklch, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
+    border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
   }
   .pill-mood {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium;
-    background: oklch(70% 0.18 15 / 0.12);
-    color: var(--color-rose-400);
-    border: 1px solid oklch(70% 0.18 15 / 0.2);
+    background: color-mix(in oklch, var(--color-tertiary) 12%, transparent);
+    color: var(--color-tertiary);
+    border: 1px solid color-mix(in oklch, var(--color-tertiary) 20%, transparent);
   }
 
   /* ── Section label ────────────────────────────────────── */
   .section-label {
     @apply text-[10px] font-medium uppercase tracking-widest;
-    color: var(--color-neutral-500);
+    color: var(--color-outline);
     font-family: var(--font-sans);
     letter-spacing: 0.12em;
   }
@@ -180,38 +299,38 @@ input[type="range"]:hover::-webkit-slider-thumb {
   /* ── Context menu ─────────────────────────────────────── */
   .ctx-menu {
     @apply fixed z-50 py-1 min-w-[160px];
-    background: var(--color-neutral-900);
-    border: 1px solid var(--color-neutral-700);
+    background: var(--color-surface-container);
+    border: 1px solid var(--color-outline-variant);
     border-radius: var(--radius-lg);
     box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5), 0 4px 12px oklch(0% 0 0 / 0.3);
     backdrop-filter: blur(8px);
   }
   .ctx-menu-item {
     @apply w-full text-left px-3 py-1.5 text-xs transition-colors duration-100;
-    color: var(--color-neutral-300);
+    color: var(--color-on-surface-variant);
   }
   .ctx-menu-item:hover {
-    background: var(--color-neutral-800);
-    color: var(--color-neutral-100);
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface);
   }
   .ctx-menu-item-danger {
     @apply w-full text-left px-3 py-1.5 text-xs transition-colors duration-100;
-    color: oklch(65% 0.2 20);
+    color: var(--color-error);
   }
   .ctx-menu-item-danger:hover {
-    background: oklch(65% 0.2 20 / 0.1);
+    background: color-mix(in oklch, var(--color-error) 10%, transparent);
   }
 
   /* ── Track card cover placeholder ────────────────────── */
   .cover-placeholder {
     @apply w-full h-full flex items-center justify-center;
     background: linear-gradient(135deg,
-      var(--color-neutral-800) 0%,
-      var(--color-neutral-700) 100%
+      var(--color-surface-container-high) 0%,
+      var(--color-outline-variant) 100%
     );
     font-family: var(--font-display);
     font-size: 1.75rem;
-    color: var(--color-neutral-600);
+    color: var(--color-on-surface-variant);
     letter-spacing: 0.05em;
   }
 }

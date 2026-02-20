@@ -25,10 +25,9 @@ function sortTracks(tracks: Track[], field: SortField, dir: 'asc' | 'desc'): Tra
     else if (field === 'artistName') { av = a.artistName; bv = b.artistName }
     else if (field === 'playCount') { av = a.playCount; bv = b.playCount }
     else if (field === 'dateAdded') { av = a.dateAdded; bv = b.dateAdded }
+    else if (field === 'modifiedAt') { av = a.modifiedAt ?? a.dateAdded; bv = b.modifiedAt ?? b.dateAdded }
     else if (field === 'filePath') { av = a.filePath; bv = b.filePath }
-    else if (field === 'modifiedAt') { av = a.dateAdded; bv = b.dateAdded } // fallback to dateAdded
 
-    // null always last
     if (av === null && bv === null) return 0
     if (av === null) return 1
     if (bv === null) return -1
@@ -38,6 +37,41 @@ function sortTracks(tracks: Track[], field: SortField, dir: 'asc' | 'desc'): Tra
       : (av as number) - (bv as number)
     return dir === 'asc' ? cmp : -cmp
   })
+}
+
+function getVisibleTracks(
+  state: {
+    tracks: Track[]
+    searchResults: Track[]
+    searchQuery: string
+    selectedFolderId: string | null
+    folders: { id: string; trackIds: string[] }[]
+    sortField: SortField
+    sortDir: 'asc' | 'desc'
+    pendingDeleteIds: Set<string>
+  },
+): Track[] {
+  const baseTracks = state.searchQuery ? state.searchResults : state.tracks
+  let filteredTracks = baseTracks.filter(t => !state.pendingDeleteIds.has(t.id))
+
+  if (state.selectedFolderId === 'favorites') {
+    filteredTracks = filteredTracks.filter(t => t.isFavorite)
+  } else if (state.selectedFolderId === 'uncategorized') {
+    const allFolderTrackIds = new Set(state.folders.flatMap(f => f.trackIds))
+    filteredTracks = filteredTracks.filter(t => !allFolderTrackIds.has(t.id))
+  } else if (state.selectedFolderId === 'untagged') {
+    filteredTracks = filteredTracks.filter(t => !t.tags || t.tags.length === 0)
+  } else if (state.selectedFolderId?.startsWith('tag:')) {
+    const tag = state.selectedFolderId.slice(4)
+    filteredTracks = filteredTracks.filter(t => t.tags?.includes(tag))
+  } else if (state.selectedFolderId) {
+    const folder = state.folders.find(f => f.id === state.selectedFolderId)
+    if (folder) {
+      filteredTracks = filteredTracks.filter(t => folder.trackIds.includes(t.id))
+    }
+  }
+
+  return sortTracks(filteredTracks, state.sortField, state.sortDir)
 }
 
 export function MainContent() {
@@ -57,19 +91,30 @@ export function MainContent() {
     ? tracks.find(t => t.id === selectedTrackId) ?? null
     : null
 
-  // Context menu state
   const [ctxMenu, setCtxMenu] = useState<{ trackId: string; x: number; y: number } | null>(null)
   const [folderSubMenu, setFolderSubMenu] = useState(false)
 
-  // Pending deletes for undo
+  const selectedTrackIdRef = useRef<string | null>(null)
   const pendingDeletes = useRef(new Set<string>())
+  const deleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   useEffect(() => {
     loadTracks()
     loadFolders()
   }, [])
 
-  // Refresh selected track when it gets enriched
+  useEffect(() => {
+    selectedTrackIdRef.current = selectedTrackId
+  }, [selectedTrackId])
+
+  useEffect(() => {
+    return () => {
+      deleteTimers.current.forEach(timer => clearTimeout(timer))
+      deleteTimers.current.clear()
+      pendingDeletes.current.clear()
+    }
+  }, [])
+
   useEffect(() => {
     const unsub = window.musicApp.system.onImportEnriched(async ({ trackId }) => {
       await refreshTrack(trackId)
@@ -81,10 +126,18 @@ export function MainContent() {
     setLocalQuery('')
   }, [activeView])
 
-  // Dismiss context menu on outside click
+  useEffect(() => {
+    if (selectedTrackId && !tracks.some((t) => t.id === selectedTrackId)) {
+      setSelectedTrackId(null)
+    }
+  }, [tracks, selectedTrackId])
+
   useEffect(() => {
     if (!ctxMenu) return
-    const dismiss = () => { setCtxMenu(null); setFolderSubMenu(false) }
+    const dismiss = () => {
+      setCtxMenu(null)
+      setFolderSubMenu(false)
+    }
     window.addEventListener('click', dismiss)
     return () => window.removeEventListener('click', dismiss)
   }, [ctxMenu])
@@ -95,6 +148,7 @@ export function MainContent() {
   }
 
   const handleDelete = (trackId: string) => {
+    if (pendingDeletes.current.has(trackId)) return
     pendingDeletes.current.add(trackId)
     let cancelled = false
 
@@ -105,9 +159,15 @@ export function MainContent() {
           <button
             onClick={() => {
               cancelled = true
+              pendingDeletes.current.delete(trackId)
+              const timer = deleteTimers.current.get(trackId)
+              if (timer) {
+                clearTimeout(timer)
+                deleteTimers.current.delete(trackId)
+              }
               toast.dismiss(t.id)
             }}
-            className="text-amber-400 font-medium hover:text-amber-300"
+            className="app-accent font-medium hover:opacity-80"
           >
             실행 취소
           </button>
@@ -116,15 +176,29 @@ export function MainContent() {
       { duration: 3000, id: `delete-${trackId}` }
     )
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       pendingDeletes.current.delete(trackId)
+      deleteTimers.current.delete(trackId)
       if (!cancelled) {
         deleteTrack(trackId)
-        if (selectedTrackId === trackId) setSelectedTrackId(null)
-      } else {
-        loadTracks()
+        if (selectedTrackIdRef.current === trackId) {
+          const state = useLibraryStore.getState()
+          const latestTracks = getVisibleTracks({
+            tracks: state.tracks,
+            searchResults: state.searchResults,
+            searchQuery: state.searchQuery,
+            selectedFolderId: state.selectedFolderId,
+            folders: state.folders.map(({ id, trackIds }) => ({ id, trackIds })),
+            sortField: state.sortField,
+            sortDir: state.sortDir,
+            pendingDeleteIds: pendingDeletes.current,
+          })
+
+          setSelectedTrackId(latestTracks[0]?.id ?? null)
+        }
       }
     }, 3100)
+    deleteTimers.current.set(trackId, timer)
   }
 
   const handleContextMenu = (e: React.MouseEvent, trackId: string) => {
@@ -137,32 +211,20 @@ export function MainContent() {
     setFolderSubMenu(false)
   }
 
-  // Compute display tracks: search → folder filter → sort
-  const baseTracks = searchQuery ? searchResults : tracks
-  let filteredTracks = baseTracks.filter(t => !pendingDeletes.current.has(t.id))
-
-  if (selectedFolderId === 'favorites') {
-    filteredTracks = filteredTracks.filter(t => t.isFavorite)
-  } else if (selectedFolderId === 'uncategorized') {
-    const allFolderTrackIds = new Set(folders.flatMap(f => f.trackIds))
-    filteredTracks = filteredTracks.filter(t => !allFolderTrackIds.has(t.id))
-  } else if (selectedFolderId === 'untagged') {
-    filteredTracks = filteredTracks.filter(t => !t.tags || t.tags.length === 0)
-  } else if (selectedFolderId?.startsWith('tag:')) {
-    const tag = selectedFolderId.slice(4)
-    filteredTracks = filteredTracks.filter(t => t.tags?.includes(tag))
-  } else if (selectedFolderId) {
-    const folder = folders.find(f => f.id === selectedFolderId)
-    if (folder) {
-      filteredTracks = filteredTracks.filter(t => folder.trackIds.includes(t.id))
-    }
-  }
-
-  const displayTracks = sortTracks(filteredTracks, sortField, sortDir)
+  const displayTracks = getVisibleTracks({
+    tracks,
+    searchResults,
+    searchQuery,
+    selectedFolderId,
+    folders: folders.map(({ id, trackIds }) => ({ id, trackIds })),
+    sortField,
+    sortDir,
+    pendingDeleteIds: pendingDeletes.current,
+  })
 
   if (activeView === 'dashboard') {
     return (
-      <main className="flex-1 flex overflow-hidden bg-neutral-950">
+      <main className="flex-1 flex overflow-hidden app-bg">
         <Dashboard />
       </main>
     )
@@ -171,13 +233,12 @@ export function MainContent() {
   const ctxTrack = ctxMenu ? tracks.find(t => t.id === ctxMenu.trackId) : null
 
   return (
-    <main className="flex-1 flex overflow-hidden bg-neutral-950">
+    <main className="flex-1 flex overflow-hidden app-bg">
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Search bar + Sort */}
-        <div className="flex-shrink-0 px-6 py-3 border-b border-neutral-800">
+        <div className="flex-shrink-0 px-6 py-3 border-b app-border">
           <div className="flex items-center gap-3">
             <div className="relative flex-1 max-w-sm">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 app-muted" />
               <input
                 type="text"
                 placeholder="Search by title, artist, or genre…"
@@ -186,12 +247,12 @@ export function MainContent() {
                 className="input-base pl-8 py-1.5 text-sm w-full"
               />
             </div>
-            {/* Sort controls */}
+
             <div className="flex items-center gap-1 flex-shrink-0">
               <select
                 value={sortField}
                 onChange={e => setSortField(e.target.value as SortField)}
-                className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-neutral-600"
+                className="app-surface app-border app-text text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[color:var(--app-accent)]"
               >
                 {(Object.entries(SORT_LABELS) as [SortField, string][]).map(([field, label]) => (
                   <option key={field} value={field}>{label}</option>
@@ -199,7 +260,7 @@ export function MainContent() {
               </select>
               <button
                 onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-                className="p-1.5 rounded-md bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-100 transition-colors"
+                className="p-1.5 rounded-md app-surface app-border app-muted hover:text-[color:var(--app-text)] transition-colors"
                 title={sortDir === 'asc' ? '오름차순' : '내림차순'}
               >
                 {sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />}
@@ -228,7 +289,6 @@ export function MainContent() {
         />
       )}
 
-      {/* Context Menu */}
       {ctxMenu && ctxTrack && (
         <div
           className="ctx-menu"
@@ -296,10 +356,10 @@ function TrackGrid({ tracks, selectedTrackId, onSelect, onPlay, onContextMenu }:
 
   if (tracks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-neutral-600 gap-2">
+      <div className="flex flex-col items-center justify-center h-full app-muted gap-2">
         <span className="text-4xl">🎵</span>
         <p className="text-sm">아직 음악이 없어요.</p>
-        <p className="text-xs text-neutral-700">좋아하는 노래의 URL을 붙여넣어 시작하세요.</p>
+        <p className="text-xs app-muted">좋아하는 노래의 URL을 붙여넣어 시작하세요.</p>
       </div>
     )
   }
@@ -322,30 +382,29 @@ function TrackGrid({ tracks, selectedTrackId, onSelect, onPlay, onContextMenu }:
             onDoubleClick={() => onPlay(track)}
             onContextMenu={(e) => onContextMenu(e, track.id)}
             className={`flex flex-col items-start text-left group rounded-lg overflow-hidden p-1 transition-colors
-              ${isActive ? 'ring-2 ring-amber-400/80 rounded-lg' : isSelected ? 'ring-2 ring-amber-500/50 rounded-lg' : 'hover:bg-neutral-800/60'}`}
+              ${isActive ? 'ring-2 ring-[color:var(--app-accent)]/80 rounded-lg' : isSelected ? 'ring-2 ring-[color:var(--app-accent)]/50 rounded-lg' : 'hover:bg-[color:var(--app-surface-hover)]'}`}
           >
-            <div className="w-full aspect-square bg-neutral-800 relative overflow-hidden rounded-lg mb-2">
+            <div className="w-full aspect-square app-surface relative overflow-hidden rounded-lg mb-2">
               {coverUrl ? (
                 <img src={coverUrl} alt={track.title ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
               ) : (
                 <div className="cover-placeholder">♩</div>
               )}
               {isActive && isPlaying && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-neutral-100 text-xl">▶</span>
+                <div className="absolute inset-0 bg-[color:color-mix(in oklch,var(--color-on-surface) 40%, transparent)] flex items-center justify-center">
+                  <span className="app-text text-xl">▶</span>
                 </div>
               )}
               {track.isFavorite && (
-                <div className="absolute top-1 right-1 text-amber-400 text-xs leading-none">★</div>
+                <div className="absolute top-1 right-1 app-accent text-xs leading-none">★</div>
               )}
             </div>
-            <span className="text-xs font-medium truncate w-full text-neutral-100 px-0.5">
+            <span className="text-xs font-medium truncate w-full app-text px-0.5">
               {track.title ?? 'Unknown Title'}
             </span>
-            <span className="text-xs text-neutral-500 truncate w-full px-0.5 mb-1">
+            <span className="text-xs app-muted truncate w-full px-0.5 mb-1">
               {track.artistName ?? 'Unknown Artist'}
             </span>
-            {/* Genre / Mood pills */}
             {(track.genre || track.mood) && (
               <div className="flex gap-1 flex-wrap px-0.5">
                 {track.genre && <span className="pill-genre">{track.genre}</span>}

@@ -122,9 +122,12 @@ function toTrackRow(t: TrackMeta) {
     mood: t.mood,
     playCount: t.playCount,
     dateAdded: t.dateAdded,
+    modifiedAt: t.modifiedAt,
     trackNumber: t.trackNumber,
     tags: t.tags ?? [],
     hasAudio: t.hasAudio ?? true,
+    importStatus: t.importStatus ?? undefined,
+    importError: t.importError ?? null,
     externalLinks: t.externalLinks ?? null,
   }
 }

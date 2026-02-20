@@ -18,13 +18,10 @@ export function seedDemoIfNeeded(libraryPath: string, demoLibraryPath: string): 
 
   // demo-version 파일이 없으면 레거시 방식으로 처리
   if (!fs.existsSync(versionFile)) {
+    const existing = getTrackDirs(libraryPath)
     // 기존 트랙이 없으면 복사 시도
-    const tracksDir = path.join(libraryPath, 'tracks')
-    if (fs.existsSync(tracksDir)) {
-      const entries = fs.readdirSync(tracksDir).filter(f => f.endsWith('.info'))
-      if (entries.length > 0) return
-    }
-    copyAndPatch(demoLibraryPath, libraryPath)
+    if (existing.size > 0) return
+    copyAndPatch(demoLibraryPath, libraryPath, existing)
     return
   }
 
@@ -34,17 +31,17 @@ export function seedDemoIfNeeded(libraryPath: string, demoLibraryPath: string): 
     : ''
 
   if (userVersion === demoVersion) return  // 최신 버전이면 스킵
-
+  const existingTrackDirs = getTrackDirs(libraryPath)
   console.log(`[demo-seeder] Version mismatch (user="${userVersion}" → demo="${demoVersion}"). Re-seeding…`)
-  copyAndPatch(demoLibraryPath, libraryPath)
+  copyAndPatch(demoLibraryPath, libraryPath, existingTrackDirs)
 
   // 버전 기록
   fs.writeFileSync(userVersionFile, demoVersion, 'utf-8')
   console.log('[demo-seeder] Demo library seeded successfully.')
 }
 
-function copyAndPatch(demoLibraryPath: string, libraryPath: string): void {
-  copyRecursive(demoLibraryPath, libraryPath)
+function copyAndPatch(demoLibraryPath: string, libraryPath: string, existingTrackDirs: Set<string>): void {
+  copyRecursiveMissing(demoLibraryPath, libraryPath)
 
   // filePath / coverArtPath 패치 — 절대경로를 새 위치로 갱신
   const copiedTracksDir = path.join(libraryPath, 'tracks')
@@ -52,6 +49,7 @@ function copyAndPatch(demoLibraryPath: string, libraryPath: string): void {
 
   for (const entry of fs.readdirSync(copiedTracksDir, { withFileTypes: true })) {
     if (!entry.isDirectory() || !entry.name.endsWith('.info')) continue
+    if (existingTrackDirs.has(entry.name)) continue
     const metaPath = path.join(copiedTracksDir, entry.name, 'metadata.json')
     if (!fs.existsSync(metaPath)) continue
 
@@ -73,15 +71,24 @@ function copyAndPatch(demoLibraryPath: string, libraryPath: string): void {
   }
 }
 
-function copyRecursive(src: string, dest: string): void {
+function copyRecursiveMissing(src: string, dest: string): void {
   fs.mkdirSync(dest, { recursive: true })
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const srcPath = path.join(src, entry.name)
     const destPath = path.join(dest, entry.name)
     if (entry.isDirectory()) {
-      copyRecursive(srcPath, destPath)
+      copyRecursiveMissing(srcPath, destPath)
     } else {
-      fs.copyFileSync(srcPath, destPath)  // 강제 덮어쓰기 (버전 업데이트)
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath)
+      }
     }
   }
+}
+
+function getTrackDirs(libraryPath: string): Set<string> {
+  const tracksDir = path.join(libraryPath, 'tracks')
+  if (!fs.existsSync(tracksDir)) return new Set()
+  const entries = fs.readdirSync(tracksDir, { withFileTypes: true })
+  return new Set(entries.filter((entry) => entry.isDirectory() && entry.name.endsWith('.info')).map((entry) => entry.name))
 }

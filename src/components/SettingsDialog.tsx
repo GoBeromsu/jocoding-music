@@ -4,7 +4,7 @@ import { useThemeStore, type ThemePreference } from '@/store/themeStore'
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.ReactNode }[] = [
   { value: 'system', label: 'System', icon: <Monitor size={15} /> },
-  { value: 'dark',   label: 'Dark',   icon: <Moon   size={15} /> },
+  { value: 'dark',   label: 'Black',  icon: <Moon   size={15} /> },
   { value: 'light',  label: 'Light',  icon: <Sun    size={15} /> },
 ]
 
@@ -41,7 +41,7 @@ export function SettingsDialog() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-neutral-500 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm app-muted hover:bg-[color:var(--app-surface-hover)] hover:text-[color:var(--app-text)] transition-colors"
       >
         <Settings size={15} />
         설정
@@ -52,43 +52,43 @@ export function SettingsDialog() {
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setOpen(false)}
         >
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-[color:color-mix(in oklch,var(--color-on-surface) 60%, transparent)]" />
 
-          <div
-            className="relative bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl w-80 p-5 max-h-[90vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="text-sm font-semibold text-neutral-100 mb-4">설정</h2>
+        <div
+          className="relative app-surface border app-border rounded-xl shadow-2xl w-80 p-5 max-h-[90vh] overflow-y-auto"
+          onClick={e => e.stopPropagation()}
+        >
+            <h2 className="text-sm font-semibold app-text mb-4">설정</h2>
 
             {/* Credits */}
-            <div className="mb-5 px-3 py-2.5 bg-neutral-800 rounded-lg flex items-center justify-between">
+            <div className="mb-5 px-3 py-2.5 app-surface-subtle rounded-lg flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap size={14} className="text-yellow-400" />
-                <span className="text-xs text-neutral-300">AI Credits</span>
+                <Zap size={14} className="app-accent" />
+                <span className="text-xs app-muted">AI Credits</span>
               </div>
               <div className="text-right">
-                <span className="text-sm font-semibold text-neutral-100">
+                <span className="text-sm font-semibold app-text">
                   {credits ?? '—'}
                 </span>
-                <span className="text-[10px] text-neutral-500 ml-1">remaining</span>
+                <span className="text-[10px] app-muted ml-1">remaining</span>
               </div>
             </div>
-            <p className="text-[10px] text-neutral-600 mb-5 -mt-3 px-1">
+            <p className="text-[10px] app-muted mb-5 -mt-3 px-1">
               AI 분석 1회 = 1 크레딧 · 기본 10 크레딧 무료 제공
             </p>
 
             {/* Appearance */}
             <div>
-              <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">Appearance</p>
+              <p className="text-xs app-muted uppercase tracking-wide mb-2">Appearance</p>
               <div className="flex gap-2">
                 {THEME_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => setTheme(opt.value)}
-                    className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-lg border text-xs transition-colors ${
-                      preference === opt.value
-                        ? 'border-neutral-100 text-neutral-100 bg-neutral-700'
-                        : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200'
+                className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-lg border text-xs transition-colors ${
+                  preference === opt.value
+                        ? 'border-[color:var(--app-accent)] app-text bg-surface-container-high'
+                        : 'border-[color:var(--app-border)] app-muted hover:border-[color:var(--app-accent)] hover:text-[color:var(--app-text)]'
                     }`}
                   >
                     {opt.icon}
@@ -100,7 +100,7 @@ export function SettingsDialog() {
 
             {/* Download Quality */}
             <div className="mt-5">
-              <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">다운로드 품질</p>
+              <p className="text-xs app-muted uppercase tracking-wide mb-2">다운로드 품질</p>
               <div className="flex gap-2">
                 {QUALITY_OPTIONS.map(opt => (
                   <button
@@ -111,20 +111,20 @@ export function SettingsDialog() {
                     }}
                     className={`flex-1 py-2 rounded-lg border text-xs transition-colors ${
                       downloadQuality === opt.value
-                        ? 'border-neutral-100 text-neutral-100 bg-neutral-700'
-                        : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200'
+                        ? 'border-[color:var(--app-accent)] app-text bg-surface-container-high'
+                        : 'border-[color:var(--app-border)] app-muted hover:border-[color:var(--app-accent)] hover:text-[color:var(--app-text)]'
                     }`}
                   >
                     {opt.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-[10px] text-neutral-600">다음 임포트부터 적용됩니다.</p>
+              <p className="mt-1.5 text-[10px] app-muted">다음 임포트부터 적용됩니다.</p>
             </div>
 
             {/* OpenAI API Key */}
             <div className="mt-5">
-              <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">OpenAI API Key</p>
+              <p className="text-xs app-muted uppercase tracking-wide mb-2">OpenAI API Key</p>
               <div className="flex gap-1.5">
                 <input
                   type={showKey ? 'text' : 'password'}
@@ -134,15 +134,15 @@ export function SettingsDialog() {
                   placeholder="sk-..."
                   className="input-base flex-1"
                 />
-                <button
-                  onClick={() => setShowKey(v => !v)}
-                  className="p-1.5 text-neutral-500 hover:text-neutral-300 transition-colors"
+                  <button
+                    onClick={() => setShowKey(v => !v)}
+                  className="p-1.5 app-muted hover:text-[color:var(--app-text)] transition-colors"
                   aria-label={showKey ? 'Hide key' : 'Show key'}
                 >
                   {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-              <p className="mt-1.5 text-[10px] text-neutral-600">
+              <p className="mt-1.5 text-[10px] app-muted">
                 로컬 저장. AI 장르·무드 분류에 필요합니다.
               </p>
             </div>

@@ -1,177 +1,190 @@
-# 🎵 SoundOwn — 내 음악을 소유하고, AI가 내 취향을 기억한다
+# 음감 (Umgam)
 
-> 조코딩 × OpenAI × Primer AI 해커톤 출품작 (2025.02)
-
----
-
-## 한 줄 피치
-
-**"플레이리스트만 듣다가 자기 취향을 잃어버린 지식 노동자를 위한, 방해 없는 로컬 뮤직 에이전트 — URL 하나로 노래를 소유하고, AI가 내 취향을 기억한다."**
+유튜브 플레이리스트에서 좋은 노래를 발견했는데, 나중에 다시 못 찾은 적 있나요?
 
 ---
 
-## 왜 만들었나?
+## 왜 만들었나
 
-### 데모 훅
+요즘 음악 소비는 알고리즘이 틀어주는 플레이리스트를 수동적으로 듣는 방식입니다. 좋아하는 노래가 생겨도 누가 불렀는지, 원곡인지 커버인지, 어디서 다시 들을 수 있는지 모른 채 그냥 흘려보냅니다. 취향은 쌓이지 않고 휘발됩니다.
 
-> "유튜브 플레이리스트에서 좋아하는 노래를 발견했는데, 나중에 다시 못 찾은 적 있죠?"
+음감은 URL 하나만 붙여넣으면 그 노래를 내 컴퓨터에 저장합니다. 동시에 AI가 곡 정보를 자동으로 채워줍니다. 누가 불렀는지, 원곡은 무엇인지, 어떤 장르와 무드인지 정리해줍니다.
 
-요즘 우리는 **플레이리스트만 듣는다.** 알고리즘이 틀어주는 음악을 수동적으로 소비하다 보면, 정작 내가 어떤 음악을 왜 좋아하는지 **취향이 휘발된다.**
+브라우저를 열 필요도 없습니다. 광고도, 알고리즘 추천도, 다른 탭의 유혹도 없습니다. 내가 고른 노래만, 내 컴퓨터 안에 남습니다.
 
-그리고 딥워크 중 새 플레이리스트를 찾으러 브라우저를 열었다가, 10분이 지나도 일로 돌아오지 못한 경험은 누구나 있다.
-
-### 5 Whys로 분석한 진짜 문제
-
-| # | 질문 | 핵심 인사이트 |
-|---|------|---------------|
-| 1 | 왜 로컬에 저장하나? | 브라우저 접속 = 인지 자원 탈취. 딥워크 중 컨텍스트 스위칭이 없어야 한다 |
-| 2 | 왜 Spotify/폴더로는 안 되나? | 스트리밍 = 내 소유가 아님(언제든 사라짐). 폴더 = 메타데이터 없이 쌓이기만 함 |
-| 3 | 왜 AI가 필요한가? | 플리를 분해해서 취향을 결정화하는 도구가 없음. AI가 Genre·Mood를 붙여줘야 내 취향을 알 수 있다 |
-| 4 | 누가 고통받나? | 딥워크 중 플리를 찾아 헤매는 지식 노동자 — 본인이 1번 유저 |
-| 5 | 어떻게 돈 버나? | 크레딧 기반 취향 AI 에이전트 — "내 음악 취향을 아는 나만의 에이전트" |
-
-> 전체 분석: [`docs/5whys.md`](docs/5whys.md)
+음감은 단순한 플레이어가 아닙니다. 내가 어떤 음악을 좋아하는지 기억하고 축적하는 시스템입니다. 결국, 취향을 보존하는 에이전트로 진화합니다.
 
 ---
 
-## 제품 개요
+## 고객 문제 & 해결 방안
 
-SoundOwn은 **로컬 퍼스트 데스크톱 뮤직 플레이어**다. YouTube/SoundCloud URL을 붙여넣으면:
-
-1. **오디오를 로컬에 다운로드** — 내 것이 된다. 플랫폼이 삭제해도 사라지지 않는다
-2. **OpenAI 에이전트가 실시간으로 분석** — 장르(Genre), 무드(Mood), 아티스트 컨텍스트 자동 수집
-3. **취향 대시보드** — 내가 얼마나 어떤 장르·무드를 좋아하는지 시각화
-
-```
-URL 입력 → 다운로드 → AI 분류 → 취향 누적 → 내 취향을 아는 에이전트
-```
-
----
-
-## 핵심 기능
-
-### 🎯 URL 임포트
-- YouTube, SoundCloud 등 URL 1개로 즉시 로컬 저장
-- 플레이리스트 URL → 전체 트랙 일괄 임포트
-
-### 🤖 AI 메타데이터 에이전트 (OpenAI Responses API + Web Search)
-- **Genre 분류**: K-Pop, Indie Rock, Lo-Fi Hip-Hop 등 정밀 분류
-- **Mood 분류**: Chill, Energetic, Melancholic 등 감성 태깅
-- 아티스트 컨텍스트 및 곡 설명 자동 수집
-
-### 📊 취향 대시보드
-- 내 라이브러리의 장르·무드 분포 시각화
-- 가장 많이 들은 트랙·아티스트 Top 5
-
-### 🔒 로컬 퍼스트
-- 모든 음악 파일은 `~/Library/Application Support/jocoding-music/library/`에 저장
-- 인터넷 연결 없이도 재생 가능
-- SQLite 없음 — Eagle-style 평면 파일 구조 (JSON metadata)
+| 고객 | 문제 | 음감의 해결 |
+|---|---|---|
+| 딥워크 중 음악을 트는 지식 노동자 | 플리를 찾으러 브라우저를 열면 집중이 끊김 | URL 하나로 브라우저 없이 로컬 재생 + AI가 곡 정보 자동 수집 |
+| 유튜브에서 좋은 노래를 발견하는 음악 매니아 | 나중에 다시 못 찾음 | AI가 원곡자·커버 여부를 자동 기록, 로컬에 영구 저장 |
+| 콘텐츠에 쓸 음원을 수집하는 크리에이터 | 여러 플랫폼에서 수집·관리가 번거로움 | 메타데이터 정리된 로컬 라이브러리 + 태그·폴더 관리 |
 
 ---
 
 ## 비즈니스 모델
 
-```
-Free Tier          Credits             북극성
-──────────         ────────────        ──────────────────────────
-URL 임포트         AI 분석 1회 = 1 크레딧  내 음악 취향을 학습하는
-로컬 재생          월 구독 or 일회성 구매   개인 AI 에이전트
-기본 태그          (기본 10 크레딧 무료)
-```
+**무료 진입**: 오디오 다운로드·재생은 무제한 무료
 
-**플레이어는 입장 도구다.** 진짜 가치는 **취향 에이전트** — 내가 어떤 음악을 왜 좋아하는지 기억하고, 다음에 찾아줄 수 있는 AI.
+**크레딧 과금**: AI 메타데이터 분석은 크레딧 소모
 
-### 제품 진화 경로
+| 플랜 | 크레딧 | 가격 |
+|---|---|---|
+| Free | 월 10곡 | 무료 |
+| Basic | 월 100곡 | $5/월 |
+| Pro | 무제한 + 취향 리포트 | $15/월 |
 
-```
-지금 (MVP)                중기                       장기
-─────────────             ────────────────           ────────────────────────
-URL → 다운로드       →    취향 태깅 + 대시보드   →   내 취향을 아는 AI 에이전트
-로컬 재생                  플리 분해                  취향 기반 신곡 추천
-Genre/Mood 분류            청취 패턴 분석              "이 분위기 틀어줘" 대화
-```
+핵심은 재생기가 아닌 **"내 취향을 아는 AI 에이전트"를 구독**하는 경험입니다.
 
 ---
 
-## 차별점
+## MVP 구현 현황
 
-| | Spotify / Apple Music | mp3 폴더 | **SoundOwn** |
-|--|--|--|--|
-| 소유권 | ❌ 라이선스 만료 시 사라짐 | ✅ | ✅ |
-| 메타데이터 자동화 | ✅ (제한적) | ❌ | ✅ AI 자동 분류 |
-| 취향 분석 | △ 알고리즘 블랙박스 | ❌ | ✅ 내 데이터, 내 대시보드 |
-| 방해 없는 재생 | ❌ 앱 전환 필요 | △ | ✅ 데스크톱 네이티브 |
-| 플리 분해 | ❌ | ❌ | ✅ 플레이리스트 URL 1개로 전체 임포트 |
+MVP에서 실제 작동하는 기능만 명시합니다.
+
+### ✅ 구현 완료
+
+**URL 임포트 & 저장**
+- YouTube·SoundCloud URL 또는 플레이리스트를 한 번에 다운로드 (yt-dlp)
+- 오디오 파일을 `userData/library/tracks/{ID}.info/audio.*`에 영구 저장
+- 커버 썸네일 자동 다운로드
+- 128k / 192k / best 품질 선택 가능
+
+**AI 메타데이터 분석** (OpenAI GPT-4o-mini + 웹 검색)
+- 수행 아티스트 및 원곡 아티스트 추출
+- 커버곡 여부(`isCover`) 자동 감지
+- 장르 분류 (K-Pop, Rock, Hip-Hop, Electronic, Jazz 등 30개 카테고리)
+- 무드 분류 (Chill, Energetic, Melancholic, Dark, Romantic 등 16개 카테고리)
+- 크레딧 시스템: 기본 10개, AI 분석 1회 = 1크레딧
+
+**로컬 라이브러리**
+- 트랙 추가·수정·삭제(소프트 삭제)
+- 제목·아티스트·앨범·장르·무드로 실시간 검색
+- 추가일·제목·아티스트·재생 수 기준 정렬 (오름/내림차순)
+- 즐겨찾기·태그·커스텀 폴더로 필터링
+- 로컬 폴더 스캔 (기존 오디오 파일 일괄 가져오기)
+
+**취향 대시보드**
+- 상위 6개 장르·무드 분포 시각화
+- 많이 들은 곡 Top 5 (재생 수 기준)
+- 최근 추가 곡 5개
+- "내 취향 분석" 버튼: AI가 취향을 1-2줄로 묘사 (크레딧 1 소모)
+
+**플레이어**
+- 재생·일시정지·다음·이전·볼륨·시간 이동
+- 재생 횟수(`playCount`) 자동 기록
+- 이전 곡 로직: 3초 이상 재생 시 현재 곡 재시작, 미만이면 이전 곡
+- macOS MediaSession API (잠금화면·Touch Bar 컨트롤) 연동
+
+**기타**
+- System/Dark/Light 테마 선택 (OS 자동 감지 포함)
+- Obsidian 볼트에 트랙 노트 자동 생성
+- 데모용 샘플 라이브러리 자동 시딩
+
+### 🚧 미구현 (다음 버전 계획)
+
+- Spotify·Apple Music·MelOn 플랫폼 링크 자동 수집
+- 반복·셔플 재생 모드
+- 주간/월간 청취 트렌드 분석
+- 음악 추천 기능
+
+---
+
+## 빠른 시작
+
+### 준비물
+
+| 항목 | 확인 |
+|---|---|
+| Node.js ≥ 18 | `node -v` |
+| pnpm | `pnpm -v` |
+| OpenAI API Key | [platform.openai.com](https://platform.openai.com) |
+
+### 설치
+
+```bash
+pnpm install
+```
+
+`build/bin/yt-dlp`가 없으면 먼저 다운로드합니다.
+
+```bash
+curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+  -o build/bin/yt-dlp
+chmod +x build/bin/yt-dlp
+```
+
+환경 변수를 설정합니다.
+
+```bash
+cp .env.example .env
+# .env 에 OPENAI_API_KEY=sk-... 입력
+```
+
+### 실행
+
+```bash
+pnpm dev
+```
+
+앱이 열리면 **Settings → OpenAI API Key**에 키를 입력하고 저장합니다.
+
+### 데모 체크리스트 (1분)
+
+1. **Import from URL** → YouTube URL 붙여넣기
+2. 다운로드·AI 분석 완료 후 트랙 카드의 장르·무드 태그 확인
+3. **My Taste** 탭 → 장르·무드 분포 + "내 취향 분석" 버튼
+
+자세한 대본: [`docs/demo-script.md`](docs/demo-script.md)
+
+---
+
+## 빌드
+
+```bash
+pnpm build        # 타입 체크 + 프로덕션 빌드
+pnpm dist:mac     # macOS .dmg
+pnpm dist:win     # Windows .exe
+pnpm dist:linux   # Linux AppImage
+```
+
+### macOS 미서명 빌드 실행 (개발 제출용)
+
+```bash
+xattr -dr com.apple.quarantine ./release/*.dmg
+xattr -dr com.apple.quarantine /Applications/Umgam.app
+open /Applications/Umgam.app
+```
+
+실행이 안 되면 Finder에서 앱을 우클릭 → **열기**를 한 번 더 수행합니다.
 
 ---
 
 ## 기술 스택
 
-| 레이어 | 기술 |
-|--------|------|
-| Desktop shell | Electron 34 (context isolation, sandbox) |
-| UI | React 18 + Vite + Tailwind v4 + Zustand |
-| AI | OpenAI Responses API (`gpt-4o-mini` + `web_search_preview`) |
-| 오디오 다운로드 | yt-dlp |
-| 메타데이터 파싱 | music-metadata |
-| 스토리지 | Eagle-style flat-file JSON (SQLite 없음) |
+| 분류 | 기술 |
+|---|---|
+| 앱 프레임워크 | Electron 34 + Vite |
+| UI | React 18 + Tailwind v4 |
+| 상태관리 | Zustand |
+| AI | OpenAI GPT-4o-mini + Responses API (웹 검색) |
+| 다운로드 | yt-dlp |
+| 오디오 파싱 | music-metadata |
+| 스토리지 | Eagle 방식 파일 기반 (JSON, SQLite 없음) |
 
 ---
 
-## 설치 & 실행
+## 문제 해결
 
-### 개발 환경
-
-```bash
-# 의존성 설치
-pnpm install
-
-# yt-dlp 바이너리 준비 (macOS)
-curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o build/bin/yt-dlp
-chmod +x build/bin/yt-dlp
-
-# .env 설정
-cp .env.example .env
-# .env에 OPENAI_API_KEY=sk-... 추가
-
-# 개발 서버 실행
-pnpm dev
-```
-
-### 배포 (macOS .dmg)
-
-```bash
-pnpm dist:mac
-```
-
-### 환경 변수
-
-```env
-OPENAI_API_KEY=sk-...   # OpenAI API 키 (앱 내 Settings에서도 설정 가능)
-```
-
----
-
-## 사용 방법
-
-1. 앱 실행 후 `Settings`에서 OpenAI API 키 입력
-2. 하단 `Import from URL` 클릭
-3. YouTube/SoundCloud URL 붙여넣기 → **가져오기**
-4. AI가 자동으로 Genre·Mood를 분류하고 트랙 카드에 태그 표시
-5. `My Taste` 탭에서 내 취향 대시보드 확인
-
----
-
-## 데모 시나리오 (3분)
-
-| 시간 | 내용 |
-|------|------|
-| 0:00–0:20 | 오프닝 훅: "유튜브 플리에서 좋아하는 노래 발견했는데 나중에 못 찾은 적 있죠?" |
-| 0:20–1:00 | URL 임포트 → 다운로드 → AI 분석 과정 실시간 시연 |
-| 1:00–1:30 | 트랙 카드의 Genre/Mood 태그 확인 |
-| 1:30–2:30 | 취향 대시보드 — "내가 이렇게 Lo-Fi를 좋아했구나" |
-| 2:30–3:00 | 비즈니스 모델 & 크레딧 시스템 설명 |
+| 증상 | 조치 |
+|---|---|
+| AI 분석 미작동 | Settings에서 OpenAI API Key 입력 후 앱 재시작 |
+| yt-dlp 다운로드 실패 | `chmod +x build/bin/yt-dlp` 확인, 방화벽·네트워크 점검 |
+| 트랙 불러오기 실패 | URL 접근성·지역 제한·네트워크 상태 점검 |
 
 ---
 

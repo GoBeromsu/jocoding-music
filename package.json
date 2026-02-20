@@ -13,6 +13,7 @@
     "dist:mac": "pnpm build && electron-builder --mac",
     "dist:win": "pnpm build && electron-builder --win",
     "dist:linux": "pnpm build && electron-builder --linux",
+    "dist:mac:submission": "pnpm build && electron-builder --mac",
     "typecheck": "tsc --noEmit",
     "seed:demo": "npx tsx scripts/seed-demo.ts"
   },

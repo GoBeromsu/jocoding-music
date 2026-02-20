@@ -1,5 +1,6 @@
-appId: com.jocoding.music
-productName: 음감
+appId: com.jocoding.umgam
+productName: Umgam
+artifactName: Umgam-${version}-${arch}.${ext}
 copyright: Copyright © 2025 Jocoding
 
 directories:
@@ -18,23 +19,27 @@ extraResources:
     to: demo-library
 
 mac:
+  icon: build/icon.icns
   target:
     - target: dmg
       arch:
         - arm64
         - x64
   category: public.app-category.music
-  identity: '-'
+  identity: null
   hardenedRuntime: false
   gatekeeperAssess: false
+  notarize: false
 
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch:
         - x64
 
 linux:
+  icon: build/icon.png
   target:
     - target: AppImage
       arch:

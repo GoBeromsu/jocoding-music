@@ -74,8 +74,8 @@ export function Sidebar() {
   const navItemClass = (active: boolean) => cn(
     'w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs transition-colors text-left',
     active
-      ? 'bg-neutral-700 text-neutral-100'
-      : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'
+      ? 'app-surface app-text'
+      : 'app-muted hover:bg-[color:var(--app-surface-hover)] hover:text-[color:var(--app-text)]'
   )
 
   const handleSelectAll = () => {
@@ -99,12 +99,12 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-52 flex-shrink-0 bg-neutral-900 border-r border-neutral-800 flex flex-col py-4 overflow-y-auto">
+    <aside className="w-52 flex-shrink-0 app-surface border-r border-[color:var(--app-border)] flex flex-col py-4 overflow-y-auto">
       {/* Logo */}
       <div className="px-4 mb-4 flex-shrink-0">
         <div className="flex flex-col gap-0.5">
-          <span className="text-base font-bold text-neutral-100 tracking-tight leading-none">음감</span>
-          <span className="text-[10px] text-neutral-500 tracking-widest leading-none">音感</span>
+          <span className="text-base font-bold app-text tracking-tight leading-none">Umgam</span>
+          <span className="text-[10px] app-muted tracking-widest leading-none">MUSIC AGENT</span>
         </div>
       </div>
 
@@ -123,21 +123,21 @@ export function Sidebar() {
             onClick={() => handleSelectSpecial('favorites')}
             className={navItemClass(isLibraryActive && selectedFolderId === 'favorites')}
           >
-            <Star size={12} className="text-amber-400" />
+            <Star size={12} className="app-accent" />
             <span>즐겨찾기</span>
           </button>
           <button
             onClick={() => handleSelectSpecial('uncategorized')}
             className={navItemClass(isLibraryActive && selectedFolderId === 'uncategorized')}
           >
-            <span className="w-3 h-3 inline-block text-center text-neutral-500">·</span>
+            <span className="w-3 h-3 inline-block text-center app-muted">·</span>
             <span>미분류</span>
           </button>
           <button
             onClick={() => handleSelectSpecial('untagged')}
             className={navItemClass(isLibraryActive && selectedFolderId === 'untagged')}
           >
-            <span className="w-3 h-3 inline-block text-center text-neutral-500">·</span>
+            <span className="w-3 h-3 inline-block text-center app-muted">·</span>
             <span>태그 없음</span>
           </button>
         </div>
@@ -156,15 +156,15 @@ export function Sidebar() {
       <div className="flex-shrink-0 px-2 mt-3">
         <div className="flex items-center justify-between px-2 mb-1">
           <div className="flex items-center gap-1.5">
-            <FolderOpen size={11} className="text-neutral-500" />
-            <span className="text-[10px] text-neutral-500 uppercase tracking-wider">폴더</span>
+            <FolderOpen size={11} className="app-muted" />
+            <span className="text-[10px] app-muted uppercase tracking-wider">폴더</span>
             {folders.length > 0 && (
-              <span className="text-[9px] text-neutral-600">({folders.length})</span>
+              <span className="text-[9px] app-muted">({folders.length})</span>
             )}
           </div>
           <button
             onClick={() => { setIsCreating(true); setNewFolderName('') }}
-            className="text-neutral-500 hover:text-neutral-300 transition-colors p-0.5 rounded"
+            className="app-muted hover:text-[color:var(--app-text)] transition-colors p-0.5 rounded"
             title="새 폴더"
           >
             <Plus size={12} />
@@ -183,15 +183,15 @@ export function Sidebar() {
                 if (e.key === 'Escape') setIsCreating(false)
               }}
               placeholder="폴더 이름"
-              className="flex-1 bg-neutral-800 border border-neutral-600 rounded px-2 py-1 text-xs text-neutral-100 focus:outline-none focus:border-neutral-400"
+              className="flex-1 app-surface app-border app-text rounded px-2 py-1 text-xs focus:outline-none focus:border-[color:var(--app-accent)]"
             />
-            <button onClick={handleCreateFolder} className="text-green-500 hover:text-green-400">
-              <Check size={12} />
-            </button>
-            <button onClick={() => setIsCreating(false)} className="text-neutral-500 hover:text-neutral-300">
-              <X size={12} />
-            </button>
-          </div>
+                  <button onClick={handleCreateFolder} className="app-accent hover:brightness-110">
+                    <Check size={12} />
+                  </button>
+            <button onClick={() => setIsCreating(false)} className="app-muted hover:text-[color:var(--app-text)]">
+                  <X size={12} />
+                </button>
+              </div>
         )}
 
         {/* Folder list */}
@@ -208,9 +208,9 @@ export function Sidebar() {
                       if (e.key === 'Enter') handleRenameFolder()
                       if (e.key === 'Escape') setRenamingId(null)
                     }}
-                    className="flex-1 bg-neutral-800 border border-neutral-600 rounded px-1.5 py-0.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-400"
+                    className="flex-1 app-surface app-border app-text rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-[color:var(--app-accent)]"
                   />
-                  <button onClick={handleRenameFolder} className="text-green-500 hover:text-green-400">
+                  <button onClick={handleRenameFolder} className="app-accent hover:brightness-110">
                     <Check size={11} />
                   </button>
                 </div>
@@ -231,7 +231,7 @@ export function Sidebar() {
                     <FolderOpen size={12} className="flex-shrink-0" />
                     <span className="truncate">{folder.name}</span>
                   </span>
-                  <span className="text-[9px] text-neutral-600 flex-shrink-0">
+                  <span className="text-[9px] app-muted flex-shrink-0">
                     {folder.trackIds.length}
                   </span>
                 </button>
@@ -245,8 +245,8 @@ export function Sidebar() {
       {allTags.length > 0 && (
         <div className="flex-shrink-0 px-2 mt-3">
           <div className="flex items-center gap-1.5 px-2 mb-1">
-            <Tag size={11} className="text-neutral-500" />
-            <span className="text-[10px] text-neutral-500 uppercase tracking-wider">태그</span>
+            <Tag size={11} className="app-muted" />
+            <span className="text-[10px] app-muted uppercase tracking-wider">태그</span>
           </div>
           <div className="space-y-0.5">
             {allTags.map(tag => (
@@ -255,7 +255,7 @@ export function Sidebar() {
                 onClick={() => handleSelectTag(tag)}
                 className={navItemClass(isLibraryActive && selectedFolderId === `tag:${tag}`)}
               >
-                <span className="text-[9px] px-1.5 py-0.5 bg-neutral-700 rounded-full leading-none text-neutral-400">#</span>
+                <span className="text-[9px] px-1.5 py-0.5 app-surface rounded-full leading-none app-muted">#</span>
                 <span className="truncate">{tag}</span>
               </button>
             ))}
@@ -264,8 +264,8 @@ export function Sidebar() {
       )}
 
       {/* Bottom actions */}
-      <div
-        className="mt-auto flex-shrink-0 px-3 border-t border-neutral-800 pt-3 mt-2 space-y-0.5"
+        <div
+          className="mt-auto flex-shrink-0 px-3 border-t border-[color:var(--app-border)] pt-3 space-y-0.5"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <ImportUrlDialog />

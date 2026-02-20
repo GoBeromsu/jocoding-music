@@ -1,3 +1,7 @@
+export type SortField = 'dateAdded' | 'modifiedAt' | 'title' | 'artistName' | 'playCount' | 'filePath'
+export type ImportStatus = 'idle' | 'downloading' | 'enriching' | 'ready' | 'error'
+export type TrackImportStep = 'metadata' | 'downloading' | 'ai-searching' | 'ai-classifying' | 'done' | 'error'
+
 export interface Track {
   id: string
   filePath: string
@@ -6,19 +10,28 @@ export interface Track {
   title: string | null
   artistName: string | null
   albumTitle: string | null
+  year: number | null
+  trackNumber: number | null
   durationMs: number | null
   bitrate: number | null
+  sampleRate: number | null
+  fileSize: number | null
+  mimeType: string | null
   coverArtPath: string | null
+  tags: string[]
+  hasAudio?: boolean
+  externalLinks?: string | null
+  isDeleted?: boolean
   sourceUrl: string | null
   sourcePlatform: string | null
   genre: string | null
   mood: string | null
   playCount: number
+  lastPlayedAt: number | null
   dateAdded: number
-  trackNumber: number | null
-  tags: string[]
-  hasAudio?: boolean
-  externalLinks?: string | null
+  modifiedAt: number
+  importStatus?: ImportStatus
+  importError?: string | null
 }
 
 export interface EnrichedResult {
@@ -36,6 +49,18 @@ export interface ImportUrlResult {
   artist: string | null
   durationMs: number | null
   sourcePlatform: string
+  hasAudio?: boolean
+  importStatus?: ImportStatus
+  importError?: string | null
+}
+
+export interface TrackImportEvent {
+  trackId: string
+  step: TrackImportStep
+  percent: number
+  hasAudio?: boolean
+  message?: string
+  phase?: TrackImportStep
 }
 
 export interface TrackStats {
@@ -67,6 +92,25 @@ export interface Folder {
   modifiedAt: number
 }
 
+export interface AudioUrlResult {
+  trackId: string
+  url: string | null
+  hasAudio: boolean
+  error: string | null
+}
+
+export interface ObsidianNote {
+  // legacy path name preserved for frontend usage
+  path: string
+  // canonical note path key for API calls
+  notePath: string
+  title: string
+  trackId?: string
+  vaultPath?: string
+  createdAt?: number
+  updatedAt?: number
+}
+
 declare global {
   interface Window {
     musicApp: {
@@ -80,12 +124,12 @@ declare global {
         importPlaylist: (url: string) => Promise<{ trackIds: string[]; count: number }>
       }
       player: {
-        getAudioUrl: (trackId: string) => Promise<string>
+        getAudioUrl: (trackId: string) => Promise<AudioUrlResult>
         updatePlayCount: (trackId: string) => Promise<void>
       }
       system: {
         onImportStatus: (
-          cb: (status: { step: string; percent: number; trackId?: string }) => void
+          cb: (status: TrackImportEvent) => void
         ) => () => void
         onImportEnriched: (
           cb: (data: { trackId: string; result: EnrichedResult }) => void
@@ -124,6 +168,12 @@ declare global {
         deleteFolder: (id: string) => Promise<void>
         addTrackToFolder: (folderId: string, trackId: string) => Promise<void>
         removeTrackFromFolder: (folderId: string, trackId: string) => Promise<void>
+      }
+      obsidian: {
+        selectVault: () => Promise<string | null>
+        createNote: (trackId: string, vaultPath: string, content: string) => Promise<ObsidianNote>
+        getNotesByTrack: (trackId: string) => Promise<ObsidianNote[]>
+        openNote: (notePath: string) => Promise<void>
       }
     }
   }
