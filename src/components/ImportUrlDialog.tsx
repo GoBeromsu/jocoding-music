@@ -25,6 +25,13 @@ function isPlaylistUrl(url: string): boolean {
   }
 }
 
+function isMetadataOnlyUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.replace('www.', '')
+    return host === 'open.spotify.com' || host === 'music.apple.com' || host === 'melon.com'
+  } catch { return false }
+}
+
 export function ImportUrlDialog() {
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState('')
@@ -33,6 +40,7 @@ export function ImportUrlDialog() {
   const [error, setError] = useState<string | null>(null)
   const [enrichedResult, setEnrichedResult] = useState<EnrichedResult | null>(null)
   const [isPlaylist, setIsPlaylist] = useState(false)
+  const [isMetadataOnly, setIsMetadataOnly] = useState(false)
   const unsubRef = useRef<(() => void)[]>([])
   const { loadTracks } = useLibraryStore()
 
@@ -46,6 +54,7 @@ export function ImportUrlDialog() {
   const handleUrlChange = (val: string) => {
     setUrl(val)
     setIsPlaylist(isPlaylistUrl(val))
+    setIsMetadataOnly(isMetadataOnlyUrl(val))
   }
 
   const handleImport = async (asPlaylist = false) => {
@@ -92,6 +101,7 @@ export function ImportUrlDialog() {
     setError(null)
     setEnrichedResult(null)
     setIsPlaylist(false)
+    setIsMetadataOnly(false)
   }
 
   return (
@@ -134,6 +144,13 @@ export function ImportUrlDialog() {
             <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <ListMusic size={12} className="text-blue-400 flex-shrink-0" />
               <span className="text-xs text-blue-400">플레이리스트가 감지됐습니다</span>
+            </div>
+          )}
+
+          {isMetadataOnly && step === 'idle' && (
+            <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <span className="text-amber-400 flex-shrink-0">♪</span>
+              <span className="text-xs text-amber-400">오디오 없이 메타데이터만 저장됩니다 (DRM 보호)</span>
             </div>
           )}
 

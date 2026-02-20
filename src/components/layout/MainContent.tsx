@@ -328,7 +328,7 @@ function TrackGrid({ tracks, selectedTrackId, onSelect, onPlay, onContextMenu }:
               {coverUrl ? (
                 <img src={coverUrl} alt={track.title ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-600 text-3xl">♪</div>
+                <div className="cover-placeholder">♩</div>
               )}
               {isActive && isPlaying && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
