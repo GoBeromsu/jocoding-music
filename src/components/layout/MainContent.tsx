@@ -107,7 +107,7 @@ export function MainContent() {
               cancelled = true
               toast.dismiss(t.id)
             }}
-            className="text-violet-400 font-medium hover:text-violet-300"
+            className="text-amber-400 font-medium hover:text-amber-300"
           >
             실행 취소
           </button>
@@ -322,7 +322,7 @@ function TrackGrid({ tracks, selectedTrackId, onSelect, onPlay, onContextMenu }:
             onDoubleClick={() => onPlay(track)}
             onContextMenu={(e) => onContextMenu(e, track.id)}
             className={`flex flex-col items-start text-left group rounded-lg overflow-hidden p-1 transition-colors
-              ${isActive ? 'ring-2 ring-neutral-100 rounded-lg' : isSelected ? 'ring-2 ring-violet-500/60 rounded-lg' : 'hover:bg-neutral-800/60'}`}
+              ${isActive ? 'ring-2 ring-amber-400/80 rounded-lg' : isSelected ? 'ring-2 ring-amber-500/50 rounded-lg' : 'hover:bg-neutral-800/60'}`}
           >
             <div className="w-full aspect-square bg-neutral-800 relative overflow-hidden rounded-lg mb-2">
               {coverUrl ? (
@@ -348,16 +348,8 @@ function TrackGrid({ tracks, selectedTrackId, onSelect, onPlay, onContextMenu }:
             {/* Genre / Mood pills */}
             {(track.genre || track.mood) && (
               <div className="flex gap-1 flex-wrap px-0.5">
-                {track.genre && (
-                  <span className="text-[9px] px-1.5 py-0.5 bg-violet-500/20 text-violet-400 rounded-full leading-none">
-                    {track.genre}
-                  </span>
-                )}
-                {track.mood && (
-                  <span className="text-[9px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full leading-none">
-                    {track.mood}
-                  </span>
-                )}
+                {track.genre && <span className="pill-genre">{track.genre}</span>}
+                {track.mood && <span className="pill-mood">{track.mood}</span>}
               </div>
             )}
           </button>

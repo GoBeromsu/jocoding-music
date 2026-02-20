@@ -141,9 +141,9 @@ export function ImportUrlDialog() {
 
           {/* Playlist hint */}
           {isPlaylist && step === 'idle' && (
-            <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <ListMusic size={12} className="text-blue-400 flex-shrink-0" />
-              <span className="text-xs text-blue-400">플레이리스트가 감지됐습니다</span>
+            <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <ListMusic size={12} className="text-amber-400 flex-shrink-0" />
+              <span className="text-xs text-amber-400">플레이리스트가 감지됐습니다</span>
             </div>
           )}
 
@@ -166,7 +166,7 @@ export function ImportUrlDialog() {
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     step === 'ai-searching' || step === 'ai-classifying'
-                      ? 'bg-violet-500 animate-pulse'
+                      ? 'bg-amber-500 animate-pulse'
                       : 'bg-neutral-100'
                   }`}
                   style={{
@@ -186,7 +186,7 @@ export function ImportUrlDialog() {
                   const isCurrent = currentIdx === i
                   return (
                     <div key={s} className="flex items-center gap-1">
-                      <div className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-green-500' : isCurrent ? 'bg-violet-500 animate-pulse' : 'bg-neutral-700'}`} />
+                      <div className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-green-500' : isCurrent ? 'bg-amber-500 animate-pulse' : 'bg-neutral-700'}`} />
                       <span className={`text-[9px] ${isCurrent ? 'text-neutral-300' : isDone ? 'text-neutral-500' : 'text-neutral-700'}`}>
                         {['다운로드', '파싱', '검색', '분류'][i]}
                       </span>

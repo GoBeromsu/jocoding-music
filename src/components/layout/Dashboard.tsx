@@ -68,25 +68,31 @@ export function Dashboard() {
 
         {/* Hero: AI Taste Summary */}
         <div
-          className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-950/60 via-indigo-950/50 to-blue-950/40 border border-violet-500/20 p-6"
+          className="relative rounded-2xl overflow-hidden border p-6"
           style={{
-            '--color-neutral-100': 'oklch(95% 0 0)',
-            '--color-neutral-400': 'oklch(60% 0 0)',
-          } as React.CSSProperties}
+            background: 'linear-gradient(135deg, oklch(12% 0.015 70) 0%, oklch(10% 0.01 60) 60%, oklch(9% 0.008 40) 100%)',
+            borderColor: 'oklch(75% 0.145 68 / 0.2)',
+          }}
         >
-          <div className="absolute top-3 right-4 text-violet-500/20 text-5xl select-none leading-none">✦</div>
+          {/* Decorative glow */}
+          <div
+            className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none"
+            style={{ background: 'oklch(75% 0.145 68 / 0.06)' }}
+          />
+          <div className="absolute top-3 right-4 select-none leading-none text-5xl" style={{ color: 'oklch(75% 0.145 68 / 0.12)' }}>♩</div>
+
           <div className="relative">
-            <p className="text-[10px] text-violet-400 uppercase tracking-widest font-medium mb-3 flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-widest font-medium mb-3 flex items-center gap-1.5" style={{ color: 'var(--color-amber-400)' }}>
               <Sparkles size={10} />
               AI 취향 분석
             </p>
             {tasteSummary ? (
-              <p className="text-lg text-neutral-100 leading-relaxed font-light">{tasteSummary}</p>
+              <p className="text-lg text-neutral-100 leading-relaxed font-light" style={{ fontFamily: 'var(--font-display)' }}>{tasteSummary}</p>
             ) : summaryLoading ? (
               <div className="flex items-center gap-2.5">
-                <span className="inline-block w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
-                <span className="inline-block w-2 h-2 bg-violet-500 rounded-full animate-pulse delay-75" />
-                <span className="inline-block w-2 h-2 bg-violet-500 rounded-full animate-pulse delay-150" />
+                <span className="inline-block w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--color-amber-500)' }} />
+                <span className="inline-block w-2 h-2 rounded-full animate-pulse delay-75" style={{ background: 'var(--color-amber-500)' }} />
+                <span className="inline-block w-2 h-2 rounded-full animate-pulse delay-150" style={{ background: 'var(--color-amber-500)' }} />
                 <span className="text-sm text-neutral-500 ml-1">당신의 취향을 분석하고 있어요…</span>
               </div>
             ) : summaryError ? (
@@ -98,11 +104,18 @@ export function Dashboard() {
                 </p>
                 <button
                   onClick={handleGenerateSummary}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/30 border border-violet-500/40 text-violet-200 text-sm font-medium hover:bg-violet-600/40 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                  style={{
+                    background: 'oklch(75% 0.145 68 / 0.15)',
+                    border: '1px solid oklch(75% 0.145 68 / 0.3)',
+                    color: 'var(--color-amber-300)',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'oklch(75% 0.145 68 / 0.22)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'oklch(75% 0.145 68 / 0.15)')}
                 >
                   <Sparkles size={13} />
                   내 취향 분석하기
-                  <span className="text-[10px] text-violet-400 ml-1">크레딧 1</span>
+                  <span className="text-[10px] ml-1" style={{ color: 'var(--color-amber-500)' }}>크레딧 1</span>
                 </button>
               </div>
             )}
@@ -110,7 +123,10 @@ export function Dashboard() {
               <button
                 onClick={handleGenerateSummary}
                 disabled={summaryLoading}
-                className="mt-4 flex items-center gap-1.5 text-[10px] text-violet-500 hover:text-violet-300 transition-colors disabled:opacity-50"
+                className="mt-4 flex items-center gap-1.5 text-[10px] transition-colors disabled:opacity-50"
+                style={{ color: 'var(--color-amber-500)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-amber-300)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-amber-500)')}
               >
                 <RefreshCw size={9} className={summaryLoading ? 'animate-spin' : ''} />
                 다시 분석
@@ -121,7 +137,7 @@ export function Dashboard() {
 
         {/* Genre distribution */}
         {stats.topGenres.length > 0 && (
-          <Section title="장르" icon={<Music2 size={13} className="text-violet-400" />}>
+          <Section title="장르" icon={<Music2 size={13} style={{ color: 'var(--color-amber-400)' }} />}>
             <div className="space-y-3">
               {stats.topGenres.map(({ genre, trackCount }) => (
                 <div key={genre}>
@@ -131,8 +147,11 @@ export function Dashboard() {
                   </div>
                   <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-violet-500 rounded-full transition-all duration-700"
-                      style={{ width: `${(trackCount / maxGenreCount) * 100}%` }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${(trackCount / maxGenreCount) * 100}%`,
+                        background: 'var(--color-amber-500)',
+                      }}
                     />
                   </div>
                 </div>
@@ -143,7 +162,7 @@ export function Dashboard() {
 
         {/* Mood distribution */}
         {stats.topMoods.length > 0 && (
-          <Section title="무드" icon={<Zap size={13} className="text-blue-400" />}>
+          <Section title="무드" icon={<Zap size={13} style={{ color: 'var(--color-rose-400)' }} />}>
             <div className="space-y-3">
               {stats.topMoods.map(({ mood, trackCount }) => (
                 <div key={mood}>
@@ -153,8 +172,11 @@ export function Dashboard() {
                   </div>
                   <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full transition-all duration-700"
-                      style={{ width: `${(trackCount / maxMoodCount) * 100}%` }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${(trackCount / maxMoodCount) * 100}%`,
+                        background: 'var(--color-rose-400)',
+                      }}
                     />
                   </div>
                 </div>
@@ -210,11 +232,11 @@ export function Dashboard() {
                         <p className="text-xs text-neutral-200 truncate leading-tight">{t.title ?? 'Unknown'}</p>
                         <div className="flex items-center gap-1.5">
                           {t.genre && (
-                            <span className="text-[9px] text-violet-400">{t.genre}</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-amber-400)' }}>{t.genre}</span>
                           )}
                           {t.genre && t.mood && <span className="text-[9px] text-neutral-700">·</span>}
                           {t.mood && (
-                            <span className="text-[9px] text-blue-400">{t.mood}</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-rose-400)' }}>{t.mood}</span>
                           )}
                         </div>
                       </div>
