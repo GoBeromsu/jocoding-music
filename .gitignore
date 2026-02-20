@@ -11,3 +11,8 @@ build/bin/
 # Demo library audio/thumbnail files (large binaries — bundle via pnpm seed:demo + electron-builder)
 resources/demo-library/tracks/
 resources/demo-library/metadata.json
+
+# Dev tooling & generated output
+.playwright-cli/
+output/
+.DS_Store
