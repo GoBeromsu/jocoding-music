@@ -83,7 +83,7 @@ export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props
             if (e.key === 'Enter') commitEdit()
             if (e.key === 'Escape') setEditing(null)
           }}
-          className={`${className} bg-neutral-800 rounded px-1 focus:outline-none focus:ring-1 focus:ring-violet-500/60 w-full`}
+          className={`${className} bg-neutral-800 rounded px-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50 w-full`}
         />
       )
     }
@@ -217,7 +217,7 @@ export function TrackMetadataPanel({ track, onClose, onUpdate, onDelete }: Props
         </div>
 
         {aiStep && (
-          <div className="flex items-center gap-2 mb-3 text-xs text-violet-400">
+          <div className="flex items-center gap-2 mb-3 text-xs text-amber-400">
             <Loader2 size={11} className="animate-spin" />
             {aiStep === 'ai-searching' ? '🔍 곡 정보 검색 중…' : '🎵 장르·무드 분류 중…'}
           </div>
