@@ -41,6 +41,29 @@ pnpm dist:mac     # macOS .dmg 패키징
 
 ---
 
+## 릴리스 프로세스 (결정적 자동화)
+
+**원칙: 릴리스는 반드시 GitHub Actions를 통해서만. 로컬에서 `gh release upload`를 직접 실행하지 않는다.**
+
+### 자동 플로우 (일반 작업)
+
+main에 push → CI 통과 → `update-submission` job → `v0.1.0-submission` 릴리스 자동 갱신
+
+### 수동 플로우 (버전 태그 릴리스)
+
+```bash
+git tag -a v0.2.0 -m "Release v0.2.0"
+git push origin v0.2.0
+# → release-mac job → 새 GitHub Release 생성
+```
+
+### 하지 말 것
+
+- `pnpm dist:mac` 후 수동으로 `gh release upload` — Actions가 처리함
+- `release/` 폴더를 git에 커밋 — .gitignore에 있음
+
+---
+
 ## 현재 아키텍처
 
 Electron 두 프로세스 구조. 모든 통신은 IPC로만.
