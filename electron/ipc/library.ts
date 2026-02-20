@@ -45,6 +45,8 @@ export function registerLibraryHandlers(): void {
           mimeType: format.codec ?? null,
           coverArtPath: null,
           tags: [],
+          hasAudio: true,
+          externalLinks: null,
           isDeleted: false,
           sourceUrl: existing?.sourceUrl ?? null,
           sourcePlatform: existing?.sourcePlatform ?? null,
@@ -122,6 +124,8 @@ function toTrackRow(t: TrackMeta) {
     dateAdded: t.dateAdded,
     trackNumber: t.trackNumber,
     tags: t.tags ?? [],
+    hasAudio: t.hasAudio ?? true,
+    externalLinks: t.externalLinks ?? null,
   }
 }
 

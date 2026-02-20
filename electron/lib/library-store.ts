@@ -19,6 +19,8 @@ export interface TrackMeta {
   mimeType: string | null
   coverArtPath: string | null
   tags: string[]
+  hasAudio: boolean
+  externalLinks: string | null
   isDeleted: boolean
   sourceUrl: string | null
   sourcePlatform: string | null

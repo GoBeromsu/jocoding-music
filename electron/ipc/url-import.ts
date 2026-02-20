@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { parseFile } from 'music-metadata'
 import { libraryStore, type TrackMeta } from '../lib/library-store'
-import { downloadAudio, downloadThumbnail, extractPlaylistUrls } from '../lib/url-importer'
+import { downloadAudio, downloadThumbnail, extractPlaylistUrls, fetchMetadataOnly, isAudioPlatform, detectPlatform } from '../lib/url-importer'
 import { enrichMusicMetadata } from '../lib/music-agent'
 import { settingsStore } from '../lib/settings-store'
 
@@ -12,8 +12,88 @@ export function registerUrlImportHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     const id = libraryStore.newId()
     const destDir = libraryStore.getTrackDir(id)
+    const platform = detectPlatform(url)
 
-    // 1. Download audio
+    if (!isAudioPlatform(platform)) {
+      // Metadata-only path (Spotify, Apple Music, MelOn, etc.)
+      win?.webContents.send('import:status', { step: 'metadata', percent: 50, trackId: id })
+      const meta = await fetchMetadataOnly(url)
+
+      // Download thumbnail if available
+      let coverArtPath: string | null = null
+      if (meta.thumbnailUrl) {
+        fs.mkdirSync(destDir, { recursive: true })
+        const thumbPath = path.join(destDir, 'thumb.jpg')
+        try {
+          await downloadThumbnail(meta.thumbnailUrl, thumbPath)
+          coverArtPath = thumbPath
+        } catch { /* skip */ }
+      }
+
+      const track: TrackMeta = {
+        id,
+        filePath: '',
+        isImported: true,
+        isFavorite: false,
+        title: meta.title,
+        artistName: meta.artist,
+        albumTitle: null,
+        year: null,
+        trackNumber: null,
+        durationMs: null,
+        bitrate: null,
+        sampleRate: null,
+        fileSize: null,
+        mimeType: null,
+        coverArtPath,
+        tags: [],
+        hasAudio: false,
+        externalLinks: url,
+        isDeleted: false,
+        sourceUrl: url,
+        sourcePlatform: meta.sourcePlatform,
+        genre: null,
+        mood: null,
+        playCount: 0,
+        lastPlayedAt: null,
+        dateAdded: Date.now(),
+        modifiedAt: Date.now(),
+      }
+      libraryStore.upsert(track)
+      win?.webContents.send('import:status', { step: 'ai-searching', percent: 100, trackId: id })
+
+      const credits = settingsStore.get().credits
+      if (credits > 0) {
+        enrichMusicMetadata({
+          title: meta.title ?? 'Unknown',
+          artist: meta.artist ?? 'Unknown',
+          sourceUrl: url,
+          sourcePlatform: meta.sourcePlatform,
+        }).then((result) => {
+          settingsStore.deductCredit()
+          win?.webContents.send('import:status', { step: 'ai-classifying', percent: 100, trackId: id })
+          const existing = libraryStore.get(id)
+          if (existing) {
+            libraryStore.upsert({
+              ...existing,
+              artistName: result.performingArtist ?? existing.artistName,
+              genre: result.genre,
+              mood: result.mood,
+            })
+          }
+          win?.webContents.send('import:status', { step: 'done', percent: 100, trackId: id })
+          win?.webContents.send('import:enriched', { trackId: id, result })
+        }).catch(() => {
+          win?.webContents.send('import:status', { step: 'done', percent: 100, trackId: id })
+        })
+      } else {
+        win?.webContents.send('import:status', { step: 'done', percent: 100, trackId: id })
+      }
+
+      return { trackId: id, title: meta.title, artist: meta.artist, durationMs: null, sourcePlatform: meta.sourcePlatform }
+    }
+
+    // Audio download path (YouTube, SoundCloud, direct)
     win?.webContents.send('import:status', { step: 'downloading', percent: 0, trackId: id })
     const quality = settingsStore.get().downloadQuality ?? 'best'
     const imported = await downloadAudio(url, destDir, (percent) => {
@@ -67,6 +147,8 @@ export function registerUrlImportHandlers(): void {
       mimeType: null,
       coverArtPath,
       tags: [],
+      hasAudio: true,
+      externalLinks: null,
       isDeleted: false,
       sourceUrl: imported.sourceUrl,
       sourcePlatform: imported.sourcePlatform,
@@ -164,6 +246,8 @@ export function registerUrlImportHandlers(): void {
           mimeType: null,
           coverArtPath,
           tags: [],
+          hasAudio: true,
+          externalLinks: null,
           isDeleted: false,
           sourceUrl: imported.sourceUrl,
           sourcePlatform: imported.sourcePlatform,

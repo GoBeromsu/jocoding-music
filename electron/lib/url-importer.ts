@@ -6,13 +6,21 @@ import YTDlpWrapModule from 'yt-dlp-wrap'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const YTDlpWrap: typeof YTDlpWrapModule = (YTDlpWrapModule as any).default ?? YTDlpWrapModule
 
-export type SourcePlatform = 'youtube' | 'soundcloud' | 'direct' | 'unknown'
+export type SourcePlatform = 'youtube' | 'soundcloud' | 'spotify' | 'applemusic' | 'melon' | 'direct' | 'unknown'
 
 export interface ImportResult {
   filePath: string
   title: string | null
   artist: string | null
   durationMs: number | null
+  thumbnailUrl: string | null
+  sourcePlatform: SourcePlatform
+  sourceUrl: string
+}
+
+export interface MetadataOnlyResult {
+  title: string | null
+  artist: string | null
   thumbnailUrl: string | null
   sourcePlatform: SourcePlatform
   sourceUrl: string
@@ -31,11 +39,64 @@ export function detectPlatform(url: string): SourcePlatform {
     const host = u.hostname.replace('www.', '')
     if (host === 'youtube.com' || host === 'youtu.be') return 'youtube'
     if (host === 'soundcloud.com') return 'soundcloud'
+    if (host === 'open.spotify.com') return 'spotify'
+    if (host === 'music.apple.com') return 'applemusic'
+    if (host === 'www.melon.com' || host === 'melon.com') return 'melon'
     const ext = path.extname(u.pathname).toLowerCase()
     if (['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.opus', '.aac'].includes(ext)) return 'direct'
     return 'unknown'
   } catch {
     return 'unknown'
+  }
+}
+
+export function isAudioPlatform(platform: SourcePlatform): boolean {
+  return platform === 'youtube' || platform === 'soundcloud' || platform === 'direct'
+}
+
+export async function fetchMetadataOnly(url: string): Promise<MetadataOnlyResult> {
+  const platform = detectPlatform(url)
+  let title: string | null = null
+  let artist: string | null = null
+  let thumbnailUrl: string | null = null
+
+  // Try oEmbed APIs first
+  try {
+    if (platform === 'spotify') {
+      const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`
+      const res = await fetch(oembedUrl)
+      if (res.ok) {
+        const data = await res.json() as { title?: string; thumbnail_url?: string }
+        // Spotify oEmbed title format: "Song Name" or "Song Name by Artist"
+        const rawTitle = data.title ?? null
+        if (rawTitle && rawTitle.includes(' by ')) {
+          const parts = rawTitle.split(' by ')
+          title = parts[0].trim()
+          artist = parts.slice(1).join(' by ').trim()
+        } else {
+          title = rawTitle
+        }
+        thumbnailUrl = data.thumbnail_url ?? null
+      }
+    } else if (platform === 'applemusic') {
+      const oembedUrl = `https://music.apple.com/oembed?url=${encodeURIComponent(url)}`
+      const res = await fetch(oembedUrl)
+      if (res.ok) {
+        const data = await res.json() as { title?: string; thumbnail_url?: string }
+        title = data.title ?? null
+        thumbnailUrl = data.thumbnail_url ?? null
+      }
+    }
+  } catch {
+    // oEmbed failed, will rely on AI enrichment
+  }
+
+  return {
+    title: title ?? '알 수 없는 곡',
+    artist: artist ?? '알 수 없는 아티스트',
+    thumbnailUrl,
+    sourcePlatform: platform,
+    sourceUrl: url,
   }
 }
 

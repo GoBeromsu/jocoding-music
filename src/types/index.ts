@@ -17,6 +17,8 @@ export interface Track {
   dateAdded: number
   trackNumber: number | null
   tags: string[]
+  hasAudio?: boolean
+  externalLinks?: string | null
 }
 
 export interface EnrichedResult {

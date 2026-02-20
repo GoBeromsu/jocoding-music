@@ -1,32 +1,53 @@
 @import "tailwindcss";
 
+/* ── Design Tokens ─────────────────────────────────────── */
 @theme {
-  --color-neutral-950: oklch(8% 0 0);
-  --color-neutral-900: oklch(11% 0 0);
-  --color-neutral-800: oklch(16% 0 0);
-  --color-neutral-700: oklch(22% 0 0);
-  --color-neutral-600: oklch(32% 0 0);
-  --color-neutral-500: oklch(45% 0 0);
-  --color-neutral-400: oklch(60% 0 0);
-  --color-neutral-200: oklch(85% 0 0);
-  --color-neutral-100: oklch(95% 0 0);
-  --color-white: oklch(100% 0 0);
+  /* Warm-tinted dark palette */
+  --color-neutral-950: oklch(7% 0.004 60);
+  --color-neutral-900: oklch(10.5% 0.005 60);
+  --color-neutral-800: oklch(15.5% 0.006 60);
+  --color-neutral-700: oklch(22% 0.006 60);
+  --color-neutral-600: oklch(34% 0.004 60);
+  --color-neutral-500: oklch(47% 0.003 60);
+  --color-neutral-400: oklch(62% 0.003 60);
+  --color-neutral-300: oklch(76% 0.003 60);
+  --color-neutral-200: oklch(86% 0.003 60);
+  --color-neutral-100: oklch(94% 0.004 70);
+  --color-white: oklch(99% 0.003 70);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Amber accent — warm analog glow */
+  --color-amber-500: oklch(75% 0.145 68);
+  --color-amber-400: oklch(82% 0.14 70);
+  --color-amber-300: oklch(88% 0.12 72);
+  --color-amber-600: oklch(66% 0.15 64);
+
+  /* Rose for mood */
+  --color-rose-400: oklch(70% 0.18 15);
+  --color-rose-500: oklch(62% 0.20 15);
+
+  /* Typography */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Mono', monospace;
+
   --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
+/* Light theme overrides */
 .light {
-  --color-neutral-950: oklch(99% 0 0);
-  --color-neutral-900: oklch(96% 0 0);
-  --color-neutral-800: oklch(91% 0 0);
-  --color-neutral-700: oklch(82% 0 0);
-  --color-neutral-600: oklch(65% 0 0);
-  --color-neutral-500: oklch(52% 0 0);
-  --color-neutral-400: oklch(40% 0 0);
-  --color-neutral-200: oklch(20% 0 0);
-  --color-neutral-100: oklch(10% 0 0);
-  --color-white: oklch(0% 0 0);
+  --color-neutral-950: oklch(98% 0.002 80);
+  --color-neutral-900: oklch(95% 0.003 80);
+  --color-neutral-800: oklch(90% 0.003 80);
+  --color-neutral-700: oklch(81% 0.003 70);
+  --color-neutral-600: oklch(64% 0.004 60);
+  --color-neutral-500: oklch(50% 0.003 60);
+  --color-neutral-400: oklch(38% 0.003 60);
+  --color-neutral-300: oklch(25% 0.003 60);
+  --color-neutral-200: oklch(16% 0.004 60);
+  --color-neutral-100: oklch(8% 0.005 60);
+  --color-white: oklch(4% 0.004 60);
 }
 
 *, *::before, *::after {
@@ -44,69 +65,153 @@ body {
   background-color: var(--color-neutral-950);
   color: var(--color-neutral-100);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
 
-::-webkit-scrollbar { width: 6px; }
+/* Refined scrollbar */
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-neutral-700); border-radius: 3px; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-700);
+  border-radius: 2px;
+}
 ::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-600); }
 
+/* Range input — custom track */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--color-neutral-700);
+  border-radius: 2px;
+  height: 3px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-neutral-100);
+  margin-top: -3.5px;
+  transition: background 0.15s, transform 0.15s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  background: var(--color-amber-400);
+  transform: scale(1.2);
+}
+
 @layer components {
-  /* Buttons */
+  /* ── Buttons ──────────────────────────────────────────── */
   .btn-primary {
-    @apply px-4 py-1.5 text-sm font-medium bg-neutral-100 text-neutral-950 rounded-lg
-           hover:bg-neutral-200 transition-colors
+    @apply px-4 py-1.5 text-sm font-medium rounded-lg transition-all duration-150
            disabled:opacity-40 disabled:cursor-not-allowed;
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-950);
   }
+  .btn-primary:not(:disabled):hover {
+    background: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px oklch(0% 0 0 / 0.3);
+  }
+
   .btn-secondary {
-    @apply px-3 py-1.5 text-xs bg-neutral-700 text-neutral-200 rounded-lg
-           hover:bg-neutral-600 transition-colors
+    @apply px-3 py-1.5 text-xs rounded-lg transition-all duration-150
            disabled:opacity-40 disabled:cursor-not-allowed;
+    background: var(--color-neutral-800);
+    color: var(--color-neutral-300);
+    border: 1px solid var(--color-neutral-700);
   }
+  .btn-secondary:not(:disabled):hover {
+    background: var(--color-neutral-700);
+    color: var(--color-neutral-100);
+  }
+
   .btn-ghost {
-    @apply px-3 py-1.5 text-xs text-neutral-400 hover:text-neutral-100 transition-colors;
+    @apply px-3 py-1.5 text-xs transition-colors duration-150;
+    color: var(--color-neutral-500);
+  }
+  .btn-ghost:hover {
+    color: var(--color-neutral-300);
   }
 
-  /* Input */
+  /* ── Input ────────────────────────────────────────────── */
   .input-base {
-    @apply w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg
-           text-sm text-neutral-100 placeholder:text-neutral-500
-           focus:outline-none focus:border-neutral-500
+    @apply w-full px-3 py-2 rounded-lg text-sm transition-all duration-150
            disabled:opacity-50;
+    background: var(--color-neutral-800);
+    border: 1px solid var(--color-neutral-700);
+    color: var(--color-neutral-100);
+    font-family: var(--font-sans);
+  }
+  .input-base::placeholder { color: var(--color-neutral-500); }
+  .input-base:focus {
+    outline: none;
+    border-color: var(--color-neutral-500);
+    box-shadow: 0 0 0 2px oklch(47% 0.003 60 / 0.2);
   }
 
-  /* Cards */
-  .card {
-    @apply bg-neutral-900 border border-neutral-800 rounded-xl;
-  }
-
-  /* Pills */
+  /* ── Pills ────────────────────────────────────────────── */
   .pill-genre {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-[11px] font-medium bg-violet-500/20 text-violet-300;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium;
+    background: oklch(75% 0.145 68 / 0.15);
+    color: var(--color-amber-400);
+    border: 1px solid oklch(75% 0.145 68 / 0.25);
   }
   .pill-mood {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-[11px] font-medium bg-blue-500/20 text-blue-300;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium;
+    background: oklch(70% 0.18 15 / 0.12);
+    color: var(--color-rose-400);
+    border: 1px solid oklch(70% 0.18 15 / 0.2);
   }
 
-  /* Section label */
+  /* ── Section label ────────────────────────────────────── */
   .section-label {
-    @apply text-[10px] font-medium text-neutral-500 uppercase tracking-widest;
+    @apply text-[10px] font-medium uppercase tracking-widest;
+    color: var(--color-neutral-500);
+    font-family: var(--font-sans);
+    letter-spacing: 0.12em;
   }
 
-  /* Context menu */
+  /* ── Context menu ─────────────────────────────────────── */
   .ctx-menu {
-    @apply fixed z-50 bg-neutral-900 border border-neutral-700
-           rounded-lg shadow-2xl py-1 min-w-[148px];
+    @apply fixed z-50 py-1 min-w-[160px];
+    background: var(--color-neutral-900);
+    border: 1px solid var(--color-neutral-700);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5), 0 4px 12px oklch(0% 0 0 / 0.3);
+    backdrop-filter: blur(8px);
   }
   .ctx-menu-item {
-    @apply w-full text-left px-3 py-1.5 text-xs text-neutral-300
-           hover:bg-neutral-800 transition-colors;
+    @apply w-full text-left px-3 py-1.5 text-xs transition-colors duration-100;
+    color: var(--color-neutral-300);
+  }
+  .ctx-menu-item:hover {
+    background: var(--color-neutral-800);
+    color: var(--color-neutral-100);
   }
   .ctx-menu-item-danger {
-    @apply w-full text-left px-3 py-1.5 text-xs text-red-400
-           hover:bg-neutral-800 transition-colors;
+    @apply w-full text-left px-3 py-1.5 text-xs transition-colors duration-100;
+    color: oklch(65% 0.2 20);
+  }
+  .ctx-menu-item-danger:hover {
+    background: oklch(65% 0.2 20 / 0.1);
+  }
+
+  /* ── Track card cover placeholder ────────────────────── */
+  .cover-placeholder {
+    @apply w-full h-full flex items-center justify-center;
+    background: linear-gradient(135deg,
+      var(--color-neutral-800) 0%,
+      var(--color-neutral-700) 100%
+    );
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--color-neutral-600);
+    letter-spacing: 0.05em;
   }
 }
