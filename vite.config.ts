@@ -15,7 +15,7 @@ export default defineConfig({
           build: {
             sourcemap: true,
             rollupOptions: {
-              external: ['music-metadata', 'electron', 'openai', 'yt-dlp-wrap', 'dotenv'],
+              external: ['music-metadata', 'electron', 'openai', 'yt-dlp-wrap', 'dotenv', 'ffmpeg-static'],
             },
           },
         },

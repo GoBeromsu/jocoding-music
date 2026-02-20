@@ -68,6 +68,9 @@ jobs:
             -o build/bin/yt-dlp
           chmod +x build/bin/yt-dlp
 
+      - name: Install ffmpeg-static binary
+        run: node node_modules/ffmpeg-static/install.js
+
       - run: pnpm build
 
       - name: Package DMG + Publish to GitHub Releases
@@ -86,3 +89,51 @@ jobs:
           name: mac-dmg-${{ github.sha }}
           path: release/*.dmg
           if-no-files-found: error
+
+  # ── Submission: main push 시 v0.1.0-submission 릴리스 자동 갱신 ──────────
+  update-submission:
+    name: Update Submission Release
+    runs-on: macos-latest
+    timeout-minutes: 30
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Download yt-dlp universal binary
+        run: |
+          mkdir -p build/bin
+          curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos" \
+            -o build/bin/yt-dlp
+          chmod +x build/bin/yt-dlp
+
+      - name: Install ffmpeg-static binary
+        run: node node_modules/ffmpeg-static/install.js
+
+      - run: pnpm build
+
+      - name: Package DMG (no publish)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: pnpm exec electron-builder --mac --publish never
+
+      - name: Upload to submission release (clobber)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v0.1.0-submission \
+            release/Umgam-*.dmg \
+            release/Umgam-*.dmg.blockmap \
+            --clobber

@@ -12,6 +12,9 @@ files:
   - dist-electron/**/*
   - "!**/*.map"
 
+asarUnpack:
+  - node_modules/ffmpeg-static/**
+
 extraResources:
   - from: build/bin/yt-dlp
     to: bin/yt-dlp

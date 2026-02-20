@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import YTDlpWrapModule from 'yt-dlp-wrap'
+import ffmpegStaticPath from 'ffmpeg-static'
 
 // Handle ESM/CJS interop — yt-dlp-wrap may expose constructor as .default
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,9 +102,30 @@ export async function fetchMetadataOnly(url: string): Promise<MetadataOnlyResult
 }
 
 function getYtDlpBinaryPath(): string | undefined {
+  // Packaged app: resources/bin/yt-dlp
   if (process.resourcesPath) {
     const bundled = path.join(process.resourcesPath, 'bin', 'yt-dlp')
     if (fs.existsSync(bundled)) return bundled
+  }
+  // Dev fallback: system paths
+  for (const dir of ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']) {
+    const p = path.join(dir, 'yt-dlp')
+    if (fs.existsSync(p)) return p
+  }
+  return undefined
+}
+
+function getFfmpegBinaryPath(): string | undefined {
+  // 1. ffmpeg-static (fix path for asar.unpacked)
+  if (ffmpegStaticPath) {
+    const fixed = ffmpegStaticPath.replace('app.asar', 'app.asar.unpacked')
+    if (fs.existsSync(fixed)) return fixed
+    if (fs.existsSync(ffmpegStaticPath)) return ffmpegStaticPath
+  }
+  // 2. System fallback (dev brew install)
+  for (const dir of ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']) {
+    const p = path.join(dir, 'ffmpeg')
+    if (fs.existsSync(p)) return p
   }
   return undefined
 }
@@ -122,12 +144,15 @@ export async function downloadAudio(
 
   const binaryPath = getYtDlpBinaryPath()
   const ytDlp = binaryPath ? new YTDlpWrap(binaryPath) : new YTDlpWrap()
+  const ffmpegBin = getFfmpegBinaryPath()
+  const ffmpegArgs = ffmpegBin ? ['--ffmpeg-location', ffmpegBin] : []
 
   // First, get metadata via --dump-json (no download)
   const metaRaw = await ytDlp.execPromise([
     url,
     '--dump-json',
     '--no-playlist',
+    ...ffmpegArgs,
   ])
   const meta = JSON.parse(metaRaw) as {
     title?: string
@@ -158,6 +183,7 @@ export async function downloadAudio(
       '--audio-format', 'm4a',
       '--audio-quality', audioQuality,
       '-o', outputTemplate,
+      ...ffmpegArgs,
     ])
 
     process.on('progress', (progress: { percent?: number }) => {
@@ -189,12 +215,15 @@ export async function downloadAudio(
 export async function extractPlaylistUrls(url: string): Promise<string[]> {
   const binaryPath = getYtDlpBinaryPath()
   const ytDlp = binaryPath ? new YTDlpWrap(binaryPath) : new YTDlpWrap()
+  const ffmpegBin = getFfmpegBinaryPath()
+  const ffmpegArgs = ffmpegBin ? ['--ffmpeg-location', ffmpegBin] : []
 
   try {
     const raw = await ytDlp.execPromise([
       url,
       '--flat-playlist',
       '--dump-json',
+      ...ffmpegArgs,
     ])
     // Each line is a JSON object for one playlist entry
     const entries = raw.trim().split('\n').filter(Boolean).map(line => {

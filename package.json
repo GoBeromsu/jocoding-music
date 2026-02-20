@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "postinstall": "electron-builder install-app-deps",
     "dist": "pnpm build && electron-builder",
-    "predist:mac": "test -f build/bin/yt-dlp || (echo 'ERROR: build/bin/yt-dlp not found. Download it first: curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o build/bin/yt-dlp && chmod +x build/bin/yt-dlp' && exit 1)",
+    "predist:mac": "node scripts/prepare-binaries.mjs",
     "dist:mac": "pnpm build && electron-builder --mac",
     "dist:win": "pnpm build && electron-builder --win",
     "dist:linux": "pnpm build && electron-builder --linux",
@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "ffmpeg-static": "^5.3.0",
     "lucide-react": "^0.468.0",
     "music-metadata": "^10.5.0",
     "openai": "^6.22.0",
@@ -37,9 +38,13 @@
     "yt-dlp-wrap": "^2.3.12",
     "zustand": "^5.0.2"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["ffmpeg-static"]
+  },
   "devDependencies": {
     "@electron/rebuild": "^3.7.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@types/ffmpeg-static": "^5.1.0",
     "@types/node": "^22.10.7",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
